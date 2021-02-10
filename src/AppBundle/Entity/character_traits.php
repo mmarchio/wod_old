@@ -10,7 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
  * @ORM\Table(name="character_traits")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\character_traitsRepository")
  */
-class character_traits
+class character_traits implements JsonSerializable
 {
     /**
      * @var int
@@ -42,6 +42,14 @@ class character_traits
      */
     private $characterProfile;
 
+    public function jsonSerialize(): string
+    {
+        $a = [];
+        foreach ($this as $k => $v) {
+            $a[$k] = $v;
+        }
+        return $a;
+    }
 
     /**
      * Get id.
