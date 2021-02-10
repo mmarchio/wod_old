@@ -10,8 +10,17 @@ use Doctrine\ORM\Mapping as ORM;
  * @ORM\Table(name="actions")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\actionsRepository")
  */
-class actions
+class actions implements JsonSerializable
 {
+    public function jsonSerialize(): string
+    {
+        $a = [];
+        foreach ($this as $k => $v) {
+            $a[$k] = $v;
+        }
+        return $a;
+    }
+    
     /**
      * @var int
      *
