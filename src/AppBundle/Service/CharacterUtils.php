@@ -20,6 +20,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 class CharacterUtils
 {
+    //gets clan disciplines by clan
     public static function getClanDisciplines($clans, $disciplinesRepository)
     {
         $c = count($clans);
@@ -35,6 +36,7 @@ class CharacterUtils
         return $a;
     }
 
+    //gets a character by id
     public static function getCharacterById(
         Request $request, 
         $id, 
@@ -58,7 +60,7 @@ class CharacterUtils
         return $data;
     }
 
-
+    //persists character_traits to db
     public static function persistTraits(&$traits, $id, &$em)
     {
         $c = count($traits);
@@ -73,6 +75,7 @@ class CharacterUtils
         }
     }
 
+    //generates a random character
     public static function generateCharacter(
         $type, 
         $pointSchemasRepository, 
@@ -120,6 +123,7 @@ class CharacterUtils
         return $ct;
     }
 
+    //stripts total and target from trait list
     public static function getKeyLists($group)
     {
         $a = [];
@@ -131,6 +135,7 @@ class CharacterUtils
         return $a;
     }
 
+    //strips total and target from discipline list
     public static function getDisciplineList($group, $traits)
     {
         $a = [];
@@ -142,6 +147,7 @@ class CharacterUtils
         return $a;
     }
 
+    //strips total and target from background list
     public static function getBackgroundsList($group, $traits)
     {
         $a = [];
@@ -153,6 +159,7 @@ class CharacterUtils
         return $a;
     }
 
+    //distributes points into a group
     public static function generateGroup($group, $items, $traits)
     {
         while ($group->total < $group->target) {
@@ -174,6 +181,7 @@ class CharacterUtils
         return $group;
     }
 
+    //sets point distribution targets
     public static function setTargets(character_template $ct, $creation)
     {
         $ct = self::pst_attributes($ct, $creation);
@@ -187,6 +195,7 @@ class CharacterUtils
         return $ct;
     }
 
+    //sets attribute primary, secondary, tertiary identifiers
     public static function pst_attributes(character_template $ct, $creation)
     {
         $attributes = [
@@ -210,17 +219,22 @@ class CharacterUtils
         return $ct;
     }
 
-    public static function persistCharacterTrait($cp, $trait, $value)
+    //persists character traits model
+    public static function persistCharacterTrait(
+        $cp, 
+        $trait, 
+        $value, 
+        $em, 
+        $characterTraitsRepository
+    )
     {
-        $em = $this->getDoctrine()->getManager();
-        $ct = $em
-            ->getRepository(character_traits::class)
-            ->findBy(["characterProfile" => intval($cp), "trait" => $trait]);
+        $ct = $characterTraitsRepository->findBy(["characterProfile" => intval($cp), "trait" => $trait]);
         $ct[0]->setValue($value);
 
         $em->flush();
     }
     
+    //finds trait by category, sub category, or id
     public static function findTrait($traits, int $category, int $subCategory, int $id = 0)
     {
         $a = [];
@@ -240,6 +254,7 @@ class CharacterUtils
         return $a;
     }
 
+    //distributes freebie points
     public static function freebies($ct, $creation)
     {
         $freebies = new \stdClass();
