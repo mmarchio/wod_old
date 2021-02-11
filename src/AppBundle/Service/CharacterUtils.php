@@ -109,10 +109,10 @@ class CharacterUtils
         self::generateGroup($ct->getAbilities()->skills, self::getKeyLists($ct->getAbilities()->skills), $creation->traits);
         self::generateGroup($ct->getAbilities()->knowledges, self::getKeyLists($ct->getAbilities()->knowledges), $creation->traits);
         if ($ct->getClan() !== "caitiff") {
-            self::generateGroup($ct->getAdvantages()->disciplines, $this->getDisciplineList($creation->clanDisciplines, $creation->traits), $creation->traits);
+            self::generateGroup($ct->getAdvantages()->disciplines, self::getDisciplineList($creation->clanDisciplines, $creation->traits), $creation->traits);
         }
-        self::generateGroup($ct->getAdvantages()->backgrounds, $this->getBackgroundsList($creation->backgrounds, $creation->traits), $creation->traits);
-        self::generateGroup($ct->getAdvantages()->virtues, self::>getKeyLists($ct->getAdvantages()->virtues), $creation->traits);
+        self::generateGroup($ct->getAdvantages()->backgrounds, self::getBackgroundsList($creation->backgrounds, $creation->traits), $creation->traits);
+        self::generateGroup($ct->getAdvantages()->virtues, self::getKeyLists($ct->getAdvantages()->virtues), $creation->traits);
         $backgrounds = $ct->getAdvantages()->backgrounds;
         if (property_exists($backgrounds, "generation")) {
             $ct->setGeneration(($ct->getGeneration() - $backgrounds->generation->value));
