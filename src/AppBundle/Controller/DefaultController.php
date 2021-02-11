@@ -20,6 +20,7 @@ use AppBundle\Entity\trait_category;
 use AppBundle\Entity\trait_entity;
 use Doctrine\ORM\EntityManagerInterface;
 
+//PROTOTYPE
 class DefaultController extends Controller
 {
     /**
