@@ -2,6 +2,7 @@
 
 namespace AppBundle\Entity;
 
+use JsonSerializable;
 
 class character_template implements JsonSerializable
 {
@@ -23,7 +24,7 @@ class character_template implements JsonSerializable
     private $freebies;
     private $traits;
 
-    public function jsonSerialize(): string
+    public function jsonSerialize(): array
     {
         $a = [];
         foreach ($this as $k => $v) {

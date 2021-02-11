@@ -3,6 +3,7 @@
 namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use JsonSerializable;
 
 /**
  * character_traits
@@ -42,7 +43,7 @@ class character_traits implements JsonSerializable
      */
     private $characterProfile;
 
-    public function jsonSerialize(): string
+    public function jsonSerialize(): array
     {
         $a = [];
         foreach ($this as $k => $v) {

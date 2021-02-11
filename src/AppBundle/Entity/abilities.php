@@ -1,7 +1,9 @@
 <?php
 namespace AppBundle\Entity;
 
-class abilities 
+use JsonSerializable;
+
+class abilities implements JsonSerializable
 {
     private $talents;
     private $skills;
@@ -38,5 +40,14 @@ class abilities
     {
         $this->knowledges = $knowledges;
         return $this;
+    }
+
+    public function jsonSerialize()
+    {
+        $a = [];
+        foreach ($this as $k => &$v) {
+            $a[$k] = $v;
+        }
+        return $a;
     }
 }

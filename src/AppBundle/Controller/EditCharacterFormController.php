@@ -6,6 +6,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
+use AppBundle\Service\CharacterUtils;
 
 class EditCharacterFormController extends Controller 
 {
@@ -17,7 +18,19 @@ class EditCharacterFormController extends Controller
         if (!empty($request->getContent())) {
 
         }
-        $data = $this->getCharacterById($request, $id);
+        $characterProfileRepository = $this->getDoctrine()->getRepository(character_profile::class);
+        $characterTraitsRepository = $this->getDoctrine()->getRepository(character_traits::class);
+        $traitEntityRepository = $this->getDoctrine()->getRepository(trait_entity::class);
+        $clanRepository = $this->getDoctrine()->getRepository(clans::class);
+
+        $data = CharacterUtils::getCharacterById(
+            $request, 
+            $id,
+            $characterProfileRepository,
+            $characterTraitsRepository,
+            $traitEntityRepository,
+            $clanRepository
+        );
 
         return $this->render('default/editCharacter.html.twig',["data" => $data]);
     }

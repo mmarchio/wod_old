@@ -1,7 +1,9 @@
 <?php 
 namespace AppBundle\Entity;
 
-class attributes 
+use JsonSerializable;
+
+class attributes implements JsonSerializable
 {
     private $physical;
     private $social;
@@ -38,5 +40,14 @@ class attributes
     {
         $this->mental = $mental;
         return $this;
+    }
+
+    public function jsonSerialize()
+    {
+        $a = [];
+        foreach ($this as $k => &$v) {
+            $a[$k] = $v;
+        }
+        return $a;
     }
 }

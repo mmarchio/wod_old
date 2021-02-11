@@ -1,7 +1,9 @@
 <?php
 namespace AppBundle\Entity;
 
-class creation 
+use JsonSerializable;
+
+class creation implements JsonSerializable
 {
     private $points;
     private $traits;
@@ -13,12 +15,21 @@ class creation
     private $clanDisciplines;
     private $selected;
 
-    public function getPoints(): int
+    public function jsonSerialize(): array
+    {
+        $a = [];
+        foreach ($this as $k => &$v) {
+            $a[$k] = $v;
+        }        
+        return $a;
+    }
+
+    public function getPoints()
     {
         return $this->points;
     }
 
-    public function setPoints(int $points): creation
+    public function setPoints($points): creation
     {
         $this->points = $points;
         return $this;
@@ -57,7 +68,7 @@ class creation
         return $this;
     }
 
-    public function getClans($clans)
+    public function getClans()
     {
         return $this->clans;
     }

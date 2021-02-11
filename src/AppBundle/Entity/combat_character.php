@@ -2,6 +2,8 @@
 
 namespace AppBundle\Entity;
 
+use JsonSerializable;
+
 class combat_character implements JsonSerializable
 {
     private $id;
@@ -29,7 +31,7 @@ class combat_character implements JsonSerializable
     private $soakRoll;
     private $name;
 
-    public function jsonSerialize(): string
+    public function jsonSerialize(): array
     {
         $a = [];
         foreach ($this as $k => $v) {

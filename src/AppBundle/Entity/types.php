@@ -3,6 +3,7 @@
 namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use JsonSerializable;
 
 /**
  * types
@@ -12,7 +13,7 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class types implements JsonSerializable
 {
-    public function jsonSerialize(): string
+    public function jsonSerialize(): array
     {
         $a = [];
         foreach ($this as $k => $v) {

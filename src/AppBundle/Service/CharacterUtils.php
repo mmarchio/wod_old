@@ -15,6 +15,7 @@ use AppBundle\Entity\trait_entity;
 use AppBundle\Entity\creation;
 use AppBundle\Entity\attributes;
 use AppBundle\Entity\abilities;
+use AppBundle\Entity\character_data;
 use Symfony\Component\HttpFoundation\Request;
 
 class CharacterUtils
@@ -34,136 +35,24 @@ class CharacterUtils
         return $a;
     }
 
-    public static function getCharacterById(Request $request, $id, $characterProfileRepository, $characterTraitsRepository, $traitEntityRepository, $clanRepository)
+    public static function getCharacterById(
+        Request $request, 
+        $id, 
+        $characterProfileRepository, 
+        $characterTraitsRepository, 
+        $traitEntityRepository, 
+        $clanRepository
+    )
     {
         $cp = $characterProfileRepository->findBy(["id" => $id]);
         $ct = $characterTraitsRepository->findBy(["characterProfile" => $id],["trait" => "ASC"]);
-
         $traits = $traitEntityRepository->findAll();
-        $trait_count = count($traits);
-
         $clans = $clanRepository->findAll();
-        $clans_count = count($clans);
 
         $data = new \stdClass();
-        $data->character = new \stdClass();
-
-        $data->character->name = $cp[0]->getName();
-        $data->character->player = $cp[0]->getPlayer();
-        $data->character->chronicle = $cp[0]->getChronicle();
-        $data->character->nature = $cp[0]->getNature();
-        $data->character->demeanor = $cp[0]->getDemeanor();
-        $data->character->concept = $cp[0]->getConcept();
-        $data->character->clan = new \stdClass();
-        $data->character->clan->id = $cp[0]->getClan();
-        for ($i=0; $i<$clans_count; $i++) {
-            if ($clans[$i]->getId() === $data->character->clan->id) {
-                $data->character->clan->name = $clans[$i]->getName();
-            }
-        }
-        $data->character->generation = $cp[0]->getGeneration();
-        $data->character->sire = $cp[0]->getSire();
-        $data->character->freebies = $cp[0]->getFreebies();
-
-        $data->character->physical = [];
-        for ($i=0; $i<$trait_count; $i++) {
-            if ($traits[$i]->getSubCategory() === 1) {
-                $trait = new \stdClass();
-                $trait->id = $traits[$i]->getId();
-                $trait->value = self::findTraitValue($trait->id, $ct)->getValue();
-                $trait->trait = $traits[$i]->getTrait();
-                $data->character->physical[] = $trait;
-            }
-        }
-        $data->character->social = [];
-        for ($i=0; $i<$trait_count; $i++) {
-            if ($traits[$i]->getSubCategory() === 2) {
-                $trait = new \stdClass();
-                $trait->id = $traits[$i]->getId();
-                $trait->value = self::findTraitValue($trait->id, $ct)->getValue();
-                $trait->trait = $traits[$i]->getTrait();
-                $data->character->social[] = $trait;
-            }
-        }
-        $data->character->mental = [];
-        for ($i=0; $i<$trait_count; $i++) {
-            if ($traits[$i]->getSubCategory() === 3) {
-                $trait = new \stdClass();
-                $trait->id = $traits[$i]->getId();
-                $trait->value = self::findTraitValue($trait->id, $ct)->getValue();
-                $trait->trait = $traits[$i]->getTrait();
-                $data->character->mental[] = $trait;
-            }
-        }
-        $data->character->talents = [];
-        for ($i=0; $i<$trait_count; $i++) {
-            if ($traits[$i]->getSubCategory() === 4) {
-                $trait = new \stdClass();
-                $trait->id = $traits[$i]->getId();
-                $trait->value = self::findTraitValue($trait->id, $ct)->getValue();
-                $trait->trait = $traits[$i]->getTrait();
-                $data->character->talents[] = $trait;
-            }
-        }
-        $data->character->skills = [];
-        for ($i=0; $i<$trait_count; $i++) {
-            if ($traits[$i]->getSubCategory() === 5) {
-                $trait = new \stdClass();
-                $trait->id = $traits[$i]->getId();
-                $trait->value = self::findTraitValue($trait->id, $ct)->getValue();
-                $trait->trait = $traits[$i]->getTrait();
-                $data->character->skills[] = $trait;
-            }
-        }
-        $data->character->knowledges = [];
-        for ($i=0; $i<$trait_count; $i++) {
-            if ($traits[$i]->getSubCategory() === 6) {
-                $trait = new \stdClass();
-                $trait->id = $traits[$i]->getId();
-                $trait->value = self::findTraitValue($trait->id, $ct)->getValue();
-                $trait->trait = $traits[$i]->getTrait();
-                $data->character->knowledges[] = $trait;
-            }
-        }
-        $data->character->disciplines = [];
-        for ($i=0; $i<$trait_count; $i++) {
-            if ($traits[$i]->getCategory() === 3) {
-                $v = self::findTraitValue($traits[$i]->getId(), $ct);
-                if (!empty($v)) {
-                    $trait = new \stdClass();
-                    $trait->id = $traits[$i]->getId();
-                    $trait->value = $v->getValue();
-                    $trait->name = $traits[$i]->getTrait();
-                    $data->character->disciplines[] = $trait;
-                }
-            }
-        }
-        $data->character->backgrounds = [];
-        for ($i=0; $i<$trait_count; $i++) {
-            if ($traits[$i]->getCategory() === 4) {
-                $v = self::findTraitValue($traits[$i]->getId(), $ct);
-                if (!empty($v)) {
-                    $trait = new \stdClass();
-                    $trait->id = $traits[$i]->getId();
-                    $trait->value = $v->getValue();
-                    $trait->name = $traits[$i]->getTrait();
-                    $data->character->backgrounds[] = $trait;
-                }
-            }
-        }
-        $data->character->virtues = new \stdClass();
-        $data->character->virtues->conscience = self::findTraitValue(60, $ct)->getValue();
-        $data->character->virtues->self_control = self::findTraitValue(61, $ct)->getValue();
-        $data->character->virtues->courage = self::findTraitValue(62, $ct)->getValue();
-        $data->character->path = new \stdClass();
-        $data->character->path->id = 0;
-        $data->character->path->value = self::findTraitValue(64, $ct)->getValue();
-        $data->character->willpower = self::findTraitValue(63, $ct)->getValue();
-        $data->character->blood_pool = 0;
-
+        $data->character = new character_data($cp, $ct, $traits, $clans);
         $data->stylesUrl = $request->getSchemeAndHttpHost()."/css/styles.css";
         $data->url = $request->getRequestUri();
-
         $data->clans = self::toAnon($clans);
 
         return $data;
@@ -184,11 +73,28 @@ class CharacterUtils
         }
     }
 
-    //TODO: convert to static method
-    public static function generateCharacter($type)
+    public static function generateCharacter(
+        $type, 
+        $pointSchemasRepository, 
+        $traitEntityRepository, 
+        $clanRepository, 
+        $clanDisciplineRepository
+    )
     {
-        $ct = self::setCharacter($type);
-        $creation = self::setCreation($ct->getClanId());
+        $ct = self::setCharacter(
+            $type, 
+            $pointSchemasRepository, 
+            $traitEntityRepository, 
+            $clanRepository, 
+            $clanDisciplineRepository
+        );
+        $creation = self::setCreation(
+            $ct->getClanId(), 
+            $pointSchemasRepository, 
+            $traitEntityRepository, 
+            $clanRepository, 
+            $clanDisciplineRepository
+        );
         $ct = self::setTargets($ct, $creation);
         $ct->setFreebies($creation->selected->getFreebies());
         self::generateGroup($ct->getAttributes()->physical, self::getKeyLists($ct->getAttributes()->physical), $creation->traits);
@@ -214,7 +120,6 @@ class CharacterUtils
         return $ct;
     }
 
-    //TODO: convert to static method
     public static function getKeyLists($group)
     {
         $a = [];
@@ -226,7 +131,6 @@ class CharacterUtils
         return $a;
     }
 
-    //TODO: convert to static method
     public static function getDisciplineList($group, $traits)
     {
         $a = [];
@@ -238,7 +142,6 @@ class CharacterUtils
         return $a;
     }
 
-    //TODO: convert to static method
     public static function getBackgroundsList($group, $traits)
     {
         $a = [];
@@ -250,7 +153,6 @@ class CharacterUtils
         return $a;
     }
 
-    //TODO: convert to static method
     public static function generateGroup($group, $items, $traits)
     {
         while ($group->total < $group->target) {
@@ -272,7 +174,6 @@ class CharacterUtils
         return $group;
     }
 
-    //TODO: convert to static method
     public static function setTargets(character_template $ct, $creation)
     {
         $ct = self::pst_attributes($ct, $creation);
@@ -286,7 +187,6 @@ class CharacterUtils
         return $ct;
     }
 
-    //TODO: convert to static method
     public static function pst_attributes(character_template $ct, $creation)
     {
         $attributes = [
@@ -593,27 +493,23 @@ class CharacterUtils
                 $attributes = new attributes;
                 $abilities = new abilities;
                 $creation->setPoints($pointSchemasRepository->findAll())
-                    ->setTraits($traitEntityRepository->findAll())
-                    ->setAttributes()
-                $creation = new \stdClass();
-                $creation->points = $pointSchemasRepository->findAll();
-                $creation->traits = $traitEntityRepository->findAll();
-                $creation->attributes = new \stdClass();
-                $creation->attributes->physical = self::findTrait($creation->traits,1, 1);
-                $creation->attributes->social = self::findTrait($creation->traits,1, 2);
-                $creation->attributes->mental = self::findTrait($creation->traits,1, 3);
-                $creation->abilities = new \stdClass();
-                $creation->abilities->talents = self::findTrait($creation->traits,2, 4);
-                $creation->abilities->skills = self::findTrait($creation->traits,2, 5);
-                $creation->abilities->knowledges = self::findTrait($creation->traits,2, 6);
-                $creation->clans = $clanRepository->findAll();
-                $creation->backgrounds = self::findTrait($creation->traits,4, 0);
-                $creation->virtues = self::findTrait($creation->traits,5, 0);
+                    ->setTraits($traitEntityRepository->findAll());
+                $attributes->setPhysical(self::findTrait($creation->getTraits(), 1, 1))
+                    ->setSocial(self::findTrait($creation->getTraits(), 1, 2))
+                    ->setMental(self::findTrait($creation->getTraits(), 1, 3));
+                $creation->setAttributes($attributes);
+                $abilities->setTalents(self::findTrait($creation->getTraits(), 2, 4))
+                    ->setSkills(self::findTrait($creation->getTraits(), 2, 5))
+                    ->setKnowledges(self::findTrait($creation->getTraits(), 2, 6));
+                $creation->setAbilities($abilities);
+                $creation->setClans($clanRepository->findAll());
+                $creation->setBackgrounds(self::findTrait($creation->getTraits(), 4, 0));
+                $creation->setVirtues(self::findTrait($creation->getTraits(), 5, 0));
 
                 $character = new \stdClass();
-                $character->clan = rand(0,(count($creation->clans)-1));
-                $character->clanId = $creation->clans[$character->clan]->getId();
-                $character->clan = $creation->clans[$character->clan]->getName();
+                $character->clan = rand(0,(count($creation->getClans())-1));
+                $character->clanId = $creation->getClans()[$character->clan]->getId();
+                $character->clan = $creation->getClans()[$character->clan]->getName();
                 $ct->setClan($character->clan);
                 $ct->setClanId($character->clanId);
                 $creation->clanDisciplines = $clanDisciplinesRepository
@@ -627,21 +523,21 @@ class CharacterUtils
                 $character->attributes->physical->total = 0;
                 $character->attributes->physical->target = 0;
                 self::buildTraitGroup(
-                    $creation->attributes->physical, 
+                    $creation->getAttributes()->getPhysical(), 
                     $character->attributes->physical
                 );
                 $character->attributes->social = new \stdClass();
                 $character->attributes->social->total = 0;
                 $character->attributes->social->target = 0;
                 self::buildTraitGroup(
-                    $creation->attributes->social, 
+                    $creation->getAttributes()->getSocial(), 
                     $character->attributes->social
                 );
                 $character->attributes->mental = new \stdClass();
                 $character->attributes->mental->total = 0;
                 $character->attributes->mental->target = 0;
                 self::buildTraitGroup(
-                    $creation->attributes->mental, 
+                    $creation->getAttributes()->getMental(), 
                     $character->attributes->mental
                 );
                 $ct->setAttributes($character->attributes);
@@ -649,21 +545,21 @@ class CharacterUtils
                 $character->abilities->talents->total = 0;
                 $character->abilities->talents->target = 0;
                 self::buildTraitGroup(
-                    $creation->abilities->talents, 
+                    $creation->getAbilities()->getTalents(), 
                     $character->abilities->talents
                 );
                 $character->abilities->skills = new \stdClass();
                 $character->abilities->skills->total = 0;
                 $character->abilities->skills->target = 0;
                 self::buildTraitGroup(
-                    $creation->abilities->skills, 
+                    $creation->getAbilities()->getSkills(), 
                     $character->abilities->skills
                 );
                 $character->abilities->knowledges = new \stdClass();
                 $character->abilities->knowledges->total = 0;
                 $character->abilities->knowledges->target = 0;
                 self::buildTraitGroup(
-                    $creation->abilities->knowledges, 
+                    $creation->getAbilities()->getKnowledges(), 
                     $character->abilities->knowledges
                 );
                 $ct->setAbilities($character->abilities);
@@ -671,12 +567,12 @@ class CharacterUtils
                 $character->advantages->disciplines->total = 0;
                 $character->advantages->disciplines->target = 0;
                 
-                for ($i=0; $i<count($creation->clanDisciplines); $i++) {
+                for ($i=0; $i<count($creation->getClanDisciplines()); $i++) {
                     $lookup = self::findTrait(
-                        $creation->traits, 
+                        $creation->getTraits(), 
                         0, 
                         0, 
-                        $creation->clanDisciplines[$i]->getTrait()
+                        $creation->getClanDisciplines()[$i]->getTrait()
                     );
                     $trait = $lookup->getTrait();
                     $character->advantages->disciplines->{$trait} = new \stdClass();
@@ -688,7 +584,7 @@ class CharacterUtils
                 $character->advantages->virtues->total = 0;
                 $character->advantages->virtues->target = 0;
                 self::buildTraitGroup(
-                    $creation->virtues, 
+                    $creation->getVirtues(), 
                     $character->advantages->virtues
                 );
                 $character->advantages->backgrounds = new \stdClass();
