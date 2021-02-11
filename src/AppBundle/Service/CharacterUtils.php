@@ -482,7 +482,7 @@ class CharacterUtils
         $clanDisciplinesRepository
     )
     {
-        $ct = new character_template();
+        $ct = new character_template;
         switch ($type) {
             case "kindred":
                 $names = new \stdClass();
@@ -636,24 +636,25 @@ class CharacterUtils
         $clanDisciplinesRepository
     )
     {
-        $creation = new \stdClass();
-        $creation->points = $pointSchemasRepository->findAll();
-        $creation->traits = $traitEntityRepository->findAll();
-        $creation->attributes = new \stdClass();
-        $creation->attributes->physical = self::findTrait($creation->traits,1, 1);
-        $creation->attributes->social = self::findTrait($creation->traits,1, 2);
-        $creation->attributes->mental = self::findTrait($creation->traits,1, 3);
-        $creation->abilities = new \stdClass();
-        $creation->abilities->talents = self::findTrait($creation->traits,2, 4);
-        $creation->abilities->skills = self::findTrait($creation->traits,2, 5);
-        $creation->abilities->knowledges = self::findTrait($creation->traits,2, 6);
-        $creation->clans = $clanRepository->findAll();
-        $creation->backgrounds = self::findTrait($creation->traits,4, 0);
-        $creation->virtues = self::findTrait($creation->traits,5, 0);
-        $creation->clanDisciplines = $clanDisciplinesRepository->findBy(["clan" => $clan]);
-        $pc = count($creation->points) - 1;
+        $creation = new creation;
+        $attributes = new attributes;
+        $abilities = new abilities;
+        $creation->setPoints($pointSchemasRepository->findAll())
+            ->setTraits($traitEntityRepository->findAll());
+        $attributes->setPhysical(self::findTrait($creation->getTraits(), 1, 1))
+            ->setSocial(self::findTrait($creation->getTraits(), 1, 2))
+            ->setMental(self::findTrait($creation->getTraits(), 1, 3));
+        $creation->setAttributes($attributes);
+        $abilities->setTalents(self::findTrait($creation->getTraits(), 2, 4))
+            ->setSkills(self::findTrait($creation->getTraits(), 2, 5))
+            ->setKnowledges(self::findTrait($creation->getTraits(), 2, 6));
+        $creation->setAbilities($abilities);
+        $creation->setClans($clanRepository->findAll());
+        $creation->setBackgrounds(self::findTrait($creation->getTraits(), 4, 0));
+        $creation->setVirtues(self::findTrait($creation->getTraits(), 5, 0));
+        $pc = count($creation->getPoints()) - 1;
         $r = rand(0,$pc);
-        $creation->selected = $creation->points[$r];
+        $creation->setSelected($creation->getPoints()[$r]);
 
         return $creation;
     }
