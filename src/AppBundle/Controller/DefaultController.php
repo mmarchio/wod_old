@@ -24,7 +24,7 @@ use Doctrine\ORM\EntityManagerInterface;
 class DefaultController extends Controller
 {
     /**
-     * @Route("/", name="homepage")
+     * Route("/", name="homepage")
      */
     public function indexAction(Request $request)
     {
@@ -35,7 +35,7 @@ class DefaultController extends Controller
     }
 
     /**
-     * @Route("/insert/trait")
+     * Route("/insert/trait")
      */
     public function insertTraitFormAction(Request $request)
     {
@@ -65,7 +65,7 @@ class DefaultController extends Controller
     }
 
     /**
-     * @Route("/insert/category")
+     * Route("/insert/category")
      */
     public function insertCategoryFormAction(Request $request)
     {
@@ -86,7 +86,7 @@ class DefaultController extends Controller
     }
 
     /**
-     * @Route("/insert/subcategory")
+     * Route("/insert/subcategory")
      */
     public function insertSubCategoryFormAction(Request $request)
     {
@@ -113,7 +113,7 @@ class DefaultController extends Controller
     }
 
     /**
-     * @Route("/insert/clan")
+     * Route("/insert/clan")
      */
     public function insertClanFormAction(Request $request)
     {
@@ -139,7 +139,7 @@ class DefaultController extends Controller
     }
 
     /**
-     * @Route("/insert/clandiscipline")
+     * Route("/insert/clandiscipline")
      */
     public function insertClanDiscipline(Request $request)
     {
@@ -169,7 +169,7 @@ class DefaultController extends Controller
     }
 
     /**
-     * @Route("/insert/character")
+     * Route("/insert/character")
      */
     public function insertCharacterFormAction(Request $request)
     {
@@ -301,7 +301,7 @@ class DefaultController extends Controller
     }
 
     /**
-     * @Route("/edit/character/{id}")
+     * Route("/edit/character/{id}")
      */
     public function editCharacterFormAction(Request $request, string $id)
     {
@@ -457,7 +457,7 @@ class DefaultController extends Controller
     }
 
     /**
-     * @Route("/edit")
+     * Route("/edit")
      */
     public function editAction(Request $request)
     {
@@ -503,7 +503,7 @@ class DefaultController extends Controller
     }
 
     /**
-     * @Route("/generate/character/{type}/{count}")
+     * Route("/generate/character/{type}/{count}")
      */
     public function generateCharacterAction(Request $request, string $type, int $count)
     {
@@ -682,7 +682,7 @@ class DefaultController extends Controller
 
 
     /**
-     * @Route("/edit/creation-points")
+     * Route("/edit/creation-points")
      */
     public function editCreationPointsAction(Request $request)
     {
@@ -747,7 +747,7 @@ class DefaultController extends Controller
     }
 
     /**
-     * @Route("/insert/type")
+     * Route("/insert/type")
      */
     public function insertTypeAction(Request $request)
     {
@@ -773,7 +773,7 @@ class DefaultController extends Controller
 
 
     /**
-     * @Route("/freebies/{id}")
+     * Route("/freebies/{id}")
      */
     public function freebiesAction(Request $request, $id)
     {
