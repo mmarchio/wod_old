@@ -6,6 +6,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
+use AppBundle\Entity\clan;
 
 class InsertClanFormController extends Controller 
 {
@@ -21,7 +22,7 @@ class InsertClanFormController extends Controller
 
             $em = $this->getDoctrine()->getManager();
 
-            $clan = new clan();
+            $clan = new clan;
             $clan->setName($clanName);
             $clan->setWeakness($clanWeakness);
             $clan->setDescription($clanDescription);
