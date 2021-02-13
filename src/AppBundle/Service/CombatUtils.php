@@ -2,11 +2,8 @@
 namespace AppBundle\Service;
 
 use AppBundle\Entity\actions;
-use AppBundle\Entity\clan;
 use AppBundle\Entity\combat_record;
 use AppBundle\Entity\combat_character;
-use AppBundle\Entity\character_traits;
-use AppBundle\Entity\character_profile;
 use AppBundle\Entity\rolls;
 use AppBundle\Entity\roll;
 
