@@ -7,10 +7,12 @@ use AppBundle\Entity\combat_record;
 use AppBundle\Entity\combat_character;
 use AppBundle\Entity\character_traits;
 use AppBundle\Entity\character_profile;
+use AppBundle\Entity\rolls;
+use AppBundle\Entity\roll;
 
 class CombatUtils
 {
-    public static function matchStats(&$c)
+    public static function matchStats(&$c): void
     {
         $c = new \stdClass();
         $c->total_turns = 0;
@@ -33,7 +35,7 @@ class CombatUtils
         $c->hits = 0;
     }
 
-    public static function analyzeMatch($match, $data, $em)
+    public static function analyzeMatch($match, $data, $em): void
     {
         $c = count($match);
         $c1 = null;
@@ -102,17 +104,17 @@ class CombatUtils
         $em->flush();
     }
     
-    public static function getTotalTurns(&$cd)
+    public static function getTotalTurns(&$cd): void
     {
         $cd->total_turns++;
     }
 
-    public static function getAverageTurns(&$cd)
+    public static function getAverageTurns(&$cd): void
     {
         $cd->average_turns = $cd->total_turns / $cd->total_matches;
     }
 
-    public static function getHighestDamage(&$cd, $action, $i)
+    public static function getHighestDamage(&$cd, $action, $i): void
     {
         try {
             if ($action[0][$i]['action'][0]["dmg"]->result > $cd->highest_damage) {
@@ -123,22 +125,24 @@ class CombatUtils
         }
     }
     
-    public static function getLowestDamage(&$cd, $action, $i)
+    public static function getLowestDamage(&$cd, $action, $i): void
     {
         if ($action[0][$i]['action'][0]["dmg"]->result < $cd->lowest_damage) {
             $cd->lowest_damage = $action[0][$i]['action'][0]["dmg"]->result;
         }
     }
     
-    public static function getTotalDamage(&$cd, $action, $i) {
+    public static function getTotalDamage(&$cd, $action, $i): void 
+    {
         $cd->total_damage = $cd->total_damage + $action[0][$i]['action'][0]["dmg"]->result;
     }
     
-    public static function getAverageDamage(&$cd) {
+    public static function getAverageDamage(&$cd): void 
+    {
         $cd->average_damage = $cd->total_damage / $cd->total_turns;
     }
 
-    public static function getHighestSoak(&$cd, $action, $i)
+    public static function getHighestSoak(&$cd, $action, $i): void
     {
         $o = self::other($i);
         if (!empty($action[0][$o]['action'][0]["o_soak"]->result)) {
@@ -148,7 +152,7 @@ class CombatUtils
         }
     }
 
-    public static function getLowestSoak(&$cd, $action, $i)
+    public static function getLowestSoak(&$cd, $action, $i): void
     {
         $o = self::other($i);
         if (!empty($action[0][$o]['action'][0]["o_soak"]->result)) {
@@ -158,18 +162,20 @@ class CombatUtils
         }
     }
 
-    public static function getTotalSoak(&$cd, $action, $i) {
+    public static function getTotalSoak(&$cd, $action, $i): void 
+    {
         $o = self::other($i);
         if (!empty($action[0][$o]['action'][0]["o_soak"]->result)) {
             $cd->total_soak = $cd->total_soak + $action[0][$o]['action'][0]["o_soak"]->result;
         }
     }
 
-    public static function getAverageSoak(&$cd) {
+    public static function getAverageSoak(&$cd): void 
+    {
         $cd->average_soak = $cd->total_soak / $cd->total_turns;
     }
 
-    public static function getBotches(&$cd, $action, $i)
+    public static function getBotches(&$cd, $action, $i): void
     {
         $o = self::other($i);
         $totals = $action[0][$i]['action'][0];
@@ -179,7 +185,7 @@ class CombatUtils
         }
     }
     
-    public static function getRolls(&$cd, $action, $i)
+    public static function getRolls(&$cd, $action, $i): void
     {
         $o = self::other($i);
         $totals = $action[0][$i]['action'][0];
@@ -189,7 +195,7 @@ class CombatUtils
         }
     }
     
-    public static function getFailures(&$cd, $action, $i)
+    public static function getFailures(&$cd, $action, $i): void
     {
         $o = self::other($i);
         $totals = $action[0][$i]['action'][0];
@@ -199,7 +205,7 @@ class CombatUtils
         }
     }
     
-    public static function getSuccesses(&$cd, $action, $i)
+    public static function getSuccesses(&$cd, $action, $i): void
     {
         $o = self::other($i);
         $totals = $action[0][$i]['action'][0];
@@ -209,12 +215,13 @@ class CombatUtils
         }
     }
     
-    public static function getHits(&$cd, $action, $i)
+    public static function getHits(&$cd, $action, $i): void
     {
         $cd->hits = $cd->hits + $totals = $action[0][$i]['action'][0]["hit"]->result;
     }
 
-    public static function gen_uuid() {
+    public static function gen_uuid(): string 
+    {
         return sprintf( '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
             mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ),
             mt_rand( 0, 0xffff ),
@@ -230,7 +237,7 @@ class CombatUtils
         $characterTraitsRepository, 
         $p1 = null, 
         $p2 = null
-    ) 
+    ): object 
     {
         $match_id = self::gen_uuid();
 
@@ -289,7 +296,8 @@ class CombatUtils
         return $characters;
     }
 
-    public static function getRandomCharacters($character_count) {
+    public static function getRandomCharacters($character_count): object
+    {
         $p1 = rand(0, $character_count);
         $p2 = rand(0, $character_count);
         if ($p1 === $p2) {
@@ -312,7 +320,7 @@ class CombatUtils
         $id, 
         $characterTraitsRepository, 
         $characterProfileRepository
-    )
+    ): combat_character
     {
         $ct = $characterTraitsRepository->findBy(["characterProfile" => $id]);
         $cp = $characterProfileRepository->find($id);
@@ -320,25 +328,25 @@ class CombatUtils
         $c->setId($cp->getId());
         $c->setModifier(0);
         $c->setName($cp->getName());
-        $c->setStrength(self::findTraitValue(1, $ct));
-        $c->setDexterity(self::findTraitValue(2, $ct));
-        $c->setStamina(self::findTraitValue(3, $ct));
-        $c->setPerception(self::findTraitValue(7, $ct));
-        $c->setBrawl(self::findTraitValue(13, $ct));
-        $c->setDodge(self::findTraitValue(14, $ct));
-        $c->setFirearms(self::findTraitValue(23, $ct));
-        $c->setMelee(self::findTraitValue(24, $ct));
+        $c->setStrength(CommonUtils::findTraitValue(1, $ct));
+        $c->setDexterity(CommonUtils::findTraitValue(2, $ct));
+        $c->setStamina(CommonUtils::findTraitValue(3, $ct));
+        $c->setPerception(CommonUtils::findTraitValue(7, $ct));
+        $c->setBrawl(CommonUtils::findTraitValue(13, $ct));
+        $c->setDodge(CommonUtils::findTraitValue(14, $ct));
+        $c->setFirearms(CommonUtils::findTraitValue(23, $ct));
+        $c->setMelee(CommonUtils::findTraitValue(24, $ct));
         $d = [
-            40 => self::findTraitValue(40, $ct) ?? 0,
-            41 => self::findTraitValue(41, $ct) ?? 0,
-            42 => self::findTraitValue(42, $ct) ?? 0,
-            43 => self::findTraitValue(43, $ct) ?? 0,
-            44 => self::findTraitValue(44, $ct) ?? 0,
-            45 => self::findTraitValue(45, $ct) ?? 0,
-            46 => self::findTraitValue(46, $ct) ?? 0,
-            47 => self::findTraitValue(47, $ct) ?? 0,
-            48 => self::findTraitValue(48, $ct) ?? 0,
-            49 => self::findTraitValue(49, $ct) ?? 0
+            40 => CommonUtils::findTraitValue(40, $ct) ?? 0,
+            41 => CommonUtils::findTraitValue(41, $ct) ?? 0,
+            42 => CommonUtils::findTraitValue(42, $ct) ?? 0,
+            43 => CommonUtils::findTraitValue(43, $ct) ?? 0,
+            44 => CommonUtils::findTraitValue(44, $ct) ?? 0,
+            45 => CommonUtils::findTraitValue(45, $ct) ?? 0,
+            46 => CommonUtils::findTraitValue(46, $ct) ?? 0,
+            47 => CommonUtils::findTraitValue(47, $ct) ?? 0,
+            48 => CommonUtils::findTraitValue(48, $ct) ?? 0,
+            49 => CommonUtils::findTraitValue(49, $ct) ?? 0
         ];
         $c->setDisciplines($d);
         $c->setBrawlHitRoll($c->getDexterity() + $c->getBrawl());
@@ -365,7 +373,7 @@ class CombatUtils
         return $c;
     }
 
-    public static function combatTurn(combat_character $c1, combat_character $c2)
+    public static function combatTurn(combat_character $c1, combat_character $c2): array
     {
         $turn = [];
         $players = [
@@ -411,7 +419,7 @@ class CombatUtils
         return $turn;
     }
 
-    public static function getHealthModifier($c)
+    public static function getHealthModifier($c): int
     {
         if ($c->getHealth() >= 1) {
             return $c->getHealthModifier($c->getHealth());
@@ -419,7 +427,7 @@ class CombatUtils
         return -20;
     }
 
-    public static function combatAction(combat_character $c, combat_character $o)
+    public static function combatAction(combat_character $c, combat_character $o): array
     {
         $action = [];
         $temp = [
@@ -438,7 +446,7 @@ class CombatUtils
         return $action;
     }
 
-    public static function extraTurns(combat_character $c, combat_character $o)
+    public static function extraTurns(combat_character $c, combat_character $o): array
     {
         $action = [];
         if ($c->getDisciplines(42) > 0) {
@@ -461,26 +469,23 @@ class CombatUtils
         return $action;
     }
 
-    public static function heal(combat_character $c)
+    public static function heal(combat_character $c): void
     {
         if ($c->getHealth() < 7) {
             $c->setHealth($c->getHealth() + 1);
         }
     }
 
-    public static function other($val)
+    public static function other($val): int
     {
-        switch ($val) {
-            case 0:
-                return 1;
-                break;
-            case 1:
-                return 0;
-                break;
+        $r = 0;
+        if ($val === 0) {
+            $r = 1;
         }
+        return $r;
     }
 
-    public static function getInit(combat_character $c1, combat_character $c2)
+    public static function getInit(combat_character $c1, combat_character $c2): int
     {
         $init1 = self::roll(6, $c1->getInitRoll());
         $init2 = self::roll(6, $c2->getInitRoll());
@@ -497,31 +502,31 @@ class CombatUtils
         }
     }
 
-    public static static function roll($diff, $pool)
+    public static static function roll($diff, $pool): rolls
     {
-        $r = new \stdClass();
-        $r->rolls = [];
-        $r->success = 0;
-        $r->botch = 0;
-        $r->failure = 0;
+        $r = new rolls;
+        $r->setRolls([]);
+        $r->setSuccess(0);
+        $r->setBotch(0);
+        $r->setFailure(0);
+        $r->setResult(0);
         if ($pool > 0) {
             for ($i=0; $i<$pool; $i++) {
-                $roll = new \stdClass();
-                $roll->status = "failure";
-                $roll->result = rand(0,9);
-                if ($roll->result === 0 || $roll->result >= $diff) {
-                    $roll->status = "success";
-                    $r->success++;
-                } elseif ($roll->result === 1) {
-                    $roll->status = "botch";
-                    $r->botch++;
+                $roll = new roll;
+                $roll->setStatus('failure');
+                $roll->setResult(rand(0,9));
+                if ($roll->getResult() === 0 || $roll->getResult() >= $diff) {
+                    $roll->setStatus('success');
+                    $r->setSuccess(++$r->getSuccess());
+                } elseif ($roll->getResult() === 1) {
+                    $roll->setStatus('botch');
+                    $r->setBotch(++$r->getBotch());
                 }
-                $r->rolls[] = $roll;
+                $r->appendRolls($roll);
             }
-            $r->result = $r->success - $r->botch;
+            $r->setResult($r->getSuccess() - $r->getBotch());
             return $r;
         }
-        $r->result = 0;
         return $r;
     }
 
