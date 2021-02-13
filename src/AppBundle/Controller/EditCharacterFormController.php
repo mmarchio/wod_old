@@ -18,18 +18,12 @@ class EditCharacterFormController extends Controller
         if (!empty($request->getContent())) {
 
         }
-        $characterProfileRepository = $this->getDoctrine()->getRepository(character_profile::class);
-        $characterTraitsRepository = $this->getDoctrine()->getRepository(character_traits::class);
-        $traitEntityRepository = $this->getDoctrine()->getRepository(trait_entity::class);
-        $clanRepository = $this->getDoctrine()->getRepository(clans::class);
+        $doctrine = $this->getDoctrine();
 
         $data = CharacterUtils::getCharacterById(
             $request, 
             $id,
-            $characterProfileRepository,
-            $characterTraitsRepository,
-            $traitEntityRepository,
-            $clanRepository
+            $doctrine
         );
 
         return $this->render('default/editCharacter.html.twig',["data" => $data]);

@@ -6,6 +6,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
+use AppBundle\Entity\character_profile;
+use AppBundle\Entity\character_traits;
+use AppBundle\Service\CharacterUtils;
 
 class InsertCharacterFormController extends Controller 
 {
@@ -14,6 +17,7 @@ class InsertCharacterFormController extends Controller
      */
     public function insertCharacterFormAction(Request $request)
     {
+        $doctrine = $this->getDoctrine();
         if (!empty($request->getContent())) {
             $character = new \stdClass();
             $character->name = $request->get("characterName");
@@ -26,7 +30,7 @@ class InsertCharacterFormController extends Controller
             $character->generation = $request->get("characterGeneration");
             $character->sire = $request->get("characterSire");
 
-            $em = $this->getDoctrine()->getManager();
+            $em = $doctrine->getManager();
 
             $cp = new character_profile();
             $cp->setName($character->name);
@@ -70,47 +74,47 @@ class InsertCharacterFormController extends Controller
         $data->abilities = new \stdClass();
         $data->traits = new \stdClass();
 
-        $data->clans = $this->getDoctrine()
+        $data->clans = $doctrine
             ->getRepository(clan::class)
             ->findAll();
 
-        $data->clan_disciplines = json_encode($this->getClanDisciplines($data->clans));
+        $data->clan_disciplines = json_encode(CharacterUtils::getClanDisciplines($data->clans, $doctrine));
 
-        $data->attributes->physical = $this->getDoctrine()
+        $data->attributes->physical = $doctrine
             ->getRepository(trait_entity::class)
-            ->findBy(["sub_category" => "1"],["trait" => "ASC"]);
-        $data->attributes->social = $this->getDoctrine()
+            ->findBy(["sub_category" => 1],["trait" => "ASC"]);
+        $data->attributes->social = $doctrine
             ->getRepository(trait_entity::class)
-            ->findBy(["sub_category" => "2"],["trait" => "ASC"]);
-        $data->attributes->mental = $this->getDoctrine()
+            ->findBy(["sub_category" => 2],["trait" => "ASC"]);
+        $data->attributes->mental = $doctrine
             ->getRepository(trait_entity::class)
-            ->findBy(["sub_category" => "3"],["trait" => "ASC"]);
+            ->findBy(["sub_category" => 3],["trait" => "ASC"]);
 
-        $data->abilities->talents = $this->getDoctrine()
+        $data->abilities->talents = $doctrine
             ->getRepository(trait_entity::class)
-            ->findBy(["sub_category" => "4"],["trait" => "ASC"]);
+            ->findBy(["sub_category" => 4],["trait" => "ASC"]);
 
-        $data->abilities->skills = $this->getDoctrine()
+        $data->abilities->skills = $doctrine
             ->getRepository(trait_entity::class)
-            ->findBy(["sub_category" => "5"],["trait" => "ASC"]);
+            ->findBy(["sub_category" => 5],["trait" => "ASC"]);
 
-        $data->abilities->knowledges = $this->getDoctrine()
+        $data->abilities->knowledges = $doctrine
             ->getRepository(trait_entity::class)
-            ->findBy(["sub_category" => "6"],["trait" => "ASC"]);
+            ->findBy(["sub_category" => 6],["trait" => "ASC"]);
 
         $disciplinesHeader = new \stdClass();
         $disciplinesHeader->id = 0;
         $disciplinesHeader->trait = "Select Discipline";
-        $disciplines = $this->getDoctrine()
+        $disciplines = $doctrine
             ->getRepository(trait_entity::class)
-            ->findBy(["category" => "3"], ["trait" => "ASC"]);
+            ->findBy(["category" => 3], ["trait" => "ASC"]);
 
         array_unshift($disciplines, $disciplinesHeader);
         $data->disciplines = json_encode($this->toAnon($disciplines));
 
-        $backgrounds = $this->getDoctrine()
+        $backgrounds = $doctrine
             ->getRepository(trait_entity::class)
-            ->findBy(["category" => "4"], ["trait" => "ASC"]);
+            ->findBy(["category" => 4], ["trait" => "ASC"]);
 
         $backgroundsHeader = new \stdClass();
         $backgroundsHeader->id = 0;

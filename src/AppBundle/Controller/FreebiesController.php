@@ -1,11 +1,17 @@
 <?php
 namespace AppBundle\Controller;
 
+use AppBundle\Entity\character_profile;
+use AppBundle\Entity\character_traits;
+use AppBundle\Entity\clan_disciplines;
+use AppBundle\Entity\point_schemas;
+use AppBundle\Entity\trait_entity;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
+use AppBundle\Service\CharacterUtils;
 
 class FreebiesController extends Controller 
 {
@@ -14,7 +20,12 @@ class FreebiesController extends Controller
      */
     public function freebiesAction(Request $request, $id)
     {
-        $data = $this->getCharacterById($request, $id);
+        $doctrine = $this->getDoctrine();
+        $data = CharacterUtils::getCharacterById(
+            $request, 
+            $id, 
+            $doctrine
+        );
         $data->character->attributes = new \stdClass();
         $data->character->attributes->physical = $data->character->physical;
         $data->character->attributes->social = $data->character->social;
@@ -53,15 +64,18 @@ class FreebiesController extends Controller
         unset($data->character->disciplines);
         unset($data->character->backgrounds);
         unset($data->character->virtues);
-        $creation = self::setCreation($data->character->clan->id);
+        $creation = CharacterUtils::setCreation(
+            $data->character->clan->id, 
+            $doctrine
+        );
 
-        self::freebies($data->character, $creation);
+        CharacterUtils::freebies($data->character, $creation);
         $data->character->freebies = $data->character->freebies->target - $data->character->freebies->total;
         if (!empty($data->character->backgrounds->generation)) {
             $data->character->generation = 13 - $data->character->backgrounds->generation->value;
         }
-        $em = $this->getDoctrine()->getManager();
-        $cp = $em->getRepository(character_profile::class)
+        $em = $doctrine->getManager();
+        $cp = $doctrine->getRepository(character_profile::class)
             ->find($id);
         $cp->setName($data->character->name);
         $cp->setPlayer($data->character->player);
@@ -78,17 +92,17 @@ class FreebiesController extends Controller
 
         foreach ($data->character->attributes as $attribute) {
             foreach ($attribute as $trait) {
-                $this->persistCharacterTrait($id, $trait->id, $trait->value);
+                CharacterUtils::persistCharacterTrait($id, $trait->id, $trait->value, $em, $doctrine);
             }
         }
         foreach ($data->character->abilities as $ability) {
             foreach ($ability as $trait) {
-                $this->persistCharacterTrait($id, $trait->id, $trait->value);
+                CharacterUtils::persistCharacterTrait($id, $trait->id, $trait->value, $em, $doctrine);
             }
         }
         foreach ($data->character->advantages as $advantage) {
             foreach ($advantage as $trait) {
-                $this->persistCharacterTrait($id, $trait->id, $trait->value);
+                CharacterUtils::persistCharacterTrait($id, $trait->id, $trait->value, $em, $doctrine);
             }
         }
 

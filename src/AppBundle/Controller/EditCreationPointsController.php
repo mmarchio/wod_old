@@ -6,6 +6,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
+use AppBundle\Entity\point_schemas;
 
 class EditCreationPointsController extends Controller 
 {
@@ -54,7 +55,7 @@ class EditCreationPointsController extends Controller
             ->findAll();
         $data->types = [];
         $types_count = count($types);
-        $data->types = $this->toAnon($types);
+        $data->types = [];
         for ($i=0; $i<$types_count; $i++) {
             $temp = new \stdClass();
             $temp->id = $types[$i]->getId();

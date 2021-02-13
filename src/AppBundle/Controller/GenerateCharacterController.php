@@ -1,11 +1,16 @@
 <?php
 namespace AppBundle\Controller;
 
+use AppBundle\Entity\clan_disciplines;
+use AppBundle\Entity\point_schemas;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
+use AppBundle\Service\CharacterUtils;
+use AppBundle\Entity\character_profile;
+use AppBundle\Entity\character_template;
 
 class GenerateCharacterController extends Controller 
 {
@@ -14,12 +19,16 @@ class GenerateCharacterController extends Controller
      */
     public function generateCharacterAction(Request $request, string $type, int $count)
     {
+        $doctrine = $this->getDoctrine();
         $count = intval($count);
         if (!empty($count) && is_int($count)) {
-            $em = $this->getDoctrine()->getManager();
+            $em = $doctrine->getManager();
             for ($i=0; $i<$count; $i++) {
-                /** @var  character_template */
-                $ct = $this->generateCharacter($type);
+                /** @var character_template */
+                $ct = CharacterUtils::generateCharacter(
+                    $type, 
+                    $doctrine
+                );
                 $cp = new character_profile();
                 $cp->setName($ct->getName());
                 $cp->setPlayer($ct->getPlayer());
@@ -35,7 +44,7 @@ class GenerateCharacterController extends Controller
                 $em->flush();
                 $id = $cp->getId();
                 $traits = $ct->getTraits();
-                $this->persistTraits($traits, $id, $em);
+                CharacterUtils::persistTraits($traits, $id, $em);
             }
         }
         $string = $count. " character generated";

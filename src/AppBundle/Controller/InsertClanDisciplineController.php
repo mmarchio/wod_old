@@ -6,6 +6,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
+use AppBundle\Entity\clan_disciplines;
 
 class InsertClanDisciplineController extends Controller 
 {
@@ -14,13 +15,14 @@ class InsertClanDisciplineController extends Controller
      */
     public function insertClanDiscipline(Request $request)
     {
+        $doctrine = $this->getDoctrine();
         if (!empty($request->getContent())) {
             $clanName = $request->get("clanName");
             $disciplineName = $request->get("disciplineName");
 
-            $em = $this->getDoctrine()->getManager();
+            $em = $doctrine->getManager();
 
-            $cd = new clan_disciplines();
+            $cd = new clan_disciplines;
             $cd->setClan($clanName);
             $cd->setTrait($disciplineName);
 
@@ -30,10 +32,10 @@ class InsertClanDisciplineController extends Controller
 
         $data = new \stdClass();
         $data->url = $request->getRequestUri();
-        $data->clans = $this->getDoctrine()
+        $data->clans = $doctrine
             ->getRepository(clan::class)
             ->findAll();
-        $data->disciplines = $this->getDoctrine()
+        $data->disciplines = $doctrine
             ->getRepository(trait_entity::class)
             ->findBy(["category" => '3'],["trait" => "ASC"]);
         return $this->render('default/insertClanDiscipline.html.twig',["data" => $data]);

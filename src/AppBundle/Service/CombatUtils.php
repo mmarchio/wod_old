@@ -365,17 +365,6 @@ class CombatUtils
         return $c;
     }
 
-    public static function findTraitValue($id, $traits)
-    {
-        $c = count($traits);
-        for ($i=0; $i<$c; $i++) {
-            if ($traits[$i]->getTrait() == $id) {
-                return $traits[$i]->getValue();
-            }
-        }
-        return null;
-    }
-
     public static function combatTurn(combat_character $c1, combat_character $c2)
     {
         $turn = [];

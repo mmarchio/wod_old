@@ -16,12 +16,16 @@ use AppBundle\Entity\creation;
 use AppBundle\Entity\attributes;
 use AppBundle\Entity\abilities;
 use AppBundle\Entity\character_data;
+use AppBundle\Entity\trait_allocation;
+use AppBundle\Entity\trait_level;
+use stdClass;
 use Symfony\Component\HttpFoundation\Request;
 
 class CharacterUtils
 {
     //gets clan disciplines by clan
-    public static function getClanDisciplines($clans, $disciplinesRepository)
+    //refactored
+    public static function getClanDisciplines($clans, $doctrine): array
     {
         $c = count($clans);
         $a = [];
@@ -29,7 +33,10 @@ class CharacterUtils
             $clan = new \stdClass();
             $clan->id = $clans[$i]->getId();
             $clan->name = $clans[$i]->getName();
-            $clan->disciplines = $disciplinesRepository->findBy(["clan" => $clans[$i]->getId()]);
+            $clan->disciplines = $doctrine
+                                    ->getRepository(clan_disciplines::class)
+                                    ->findBy(["clan" => $clans[$i]->getId()]
+                                );
             $clan->disciplines = self::toAnon($clan->disciplines);
             $a[] = $clan;
         }
@@ -37,15 +44,13 @@ class CharacterUtils
     }
 
     //gets a character by id
-    public static function getCharacterById(
-        Request $request, 
-        $id, 
-        $characterProfileRepository, 
-        $characterTraitsRepository, 
-        $traitEntityRepository, 
-        $clanRepository
-    )
+    //refactored
+    public static function getCharacterById(Request $request, $id, $doctrine): object
     {
+        $characterProfileRepository = $doctrine->getRepository(character_profile::class);
+        $characterTraitsRepository = $doctrine->getRepository(character_traits::class);
+        $traitEntityRepository = $doctrine->getRepository(trait_entity::class);
+        $clanRepository = $doctrine->getRepository(clan::class);
         $cp = $characterProfileRepository->findBy(["id" => $id]);
         $ct = $characterTraitsRepository->findBy(["characterProfile" => $id],["trait" => "ASC"]);
         $traits = $traitEntityRepository->findAll();
@@ -61,7 +66,8 @@ class CharacterUtils
     }
 
     //persists character_traits to db
-    public static function persistTraits(&$traits, $id, &$em)
+    //refactored
+    public static function persistTraits(&$traits, $id, &$em): void
     {
         $c = count($traits);
         for ($i=0; $i<$c; $i++) {
@@ -76,14 +82,14 @@ class CharacterUtils
     }
 
     //generates a random character
-    public static function generateCharacter(
-        $type, 
-        $pointSchemasRepository, 
-        $traitEntityRepository, 
-        $clanRepository, 
-        $clanDisciplineRepository
-    )
+    //refactored
+    public static function generateCharacter($type, $doctrine): character_template
     {
+        $pointSchemasRepository = $doctrine->getRepository(point_schemas::class);
+        $traitEntityRepository = $doctrine->getRepository(trait_entity::class);
+        $clanRepository = $doctrine->getRepository(clan::class);
+        $clanDisciplineRepository = $doctrine->getRepository(clan_disciplines::class);
+
         $ct = self::setCharacter(
             $type, 
             $pointSchemasRepository, 
@@ -124,7 +130,8 @@ class CharacterUtils
     }
 
     //stripts total and target from trait list
-    public static function getKeyLists($group)
+    //refactored
+    public static function getKeyLists($group): array
     {
         $a = [];
         foreach ($group as $k => $v) {
@@ -136,7 +143,8 @@ class CharacterUtils
     }
 
     //strips total and target from discipline list
-    public static function getDisciplineList($group, $traits)
+    //refactored
+    public static function getDisciplineList($group, $traits): array
     {
         $a = [];
         foreach ($group as $k => $v) {
@@ -148,7 +156,8 @@ class CharacterUtils
     }
 
     //strips total and target from background list
-    public static function getBackgroundsList($group, $traits)
+    //refactored
+    public static function getBackgroundsList($group): array
     {
         $a = [];
         foreach ($group as $k => $v) {
@@ -160,7 +169,8 @@ class CharacterUtils
     }
 
     //distributes points into a group
-    public static function generateGroup($group, $items, $traits)
+    //refactored
+    public static function generateGroup(object $group, array $items, $traits): object
     {
         while ($group->total < $group->target) {
             $n = rand(0, count($items)-1);
@@ -182,12 +192,13 @@ class CharacterUtils
     }
 
     //sets point distribution targets
-    public static function setTargets(character_template $ct, $creation)
+    //broken
+    public static function setTargets(character_template $ct, $creation): character_template
     {
         $ct = self::pst_attributes($ct, $creation);
         $ct = self::pst_abilities($ct, $creation);
         $a = $ct->getAdvantages();
-        $a->disciplines->target = $creation->selected->getAdvantagesSpecial();
+        $a->getDisciplines()->target = $creation->selected->getAdvantagesSpecial();
         $a->backgrounds->target = $creation->selected->getAdvantagesBackgrounds();
         $a->virtues->target = $creation->selected->getAdvantagesVirtues();
         $ct->setAdvantages($a);
@@ -195,39 +206,17 @@ class CharacterUtils
         return $ct;
     }
 
-    //sets attribute primary, secondary, tertiary identifiers
-    public static function pst_attributes(character_template $ct, $creation)
-    {
-        $attributes = [
-            "physical",
-            "social",
-            "mental"
-        ];
-
-        $pst = self::pst_setter();
-        $pst->p = $attributes[$pst->p];
-        $pst->s = $attributes[$pst->s];
-        $pst->t = $attributes[$pst->t];
-
-        $a = $ct->getAttributes();
-        $a->{$pst->p}->target = $creation->selected->getAttributePrimary();
-        $a->{$pst->s}->target = $creation->selected->getAttributeSecondary();
-        $a->{$pst->t}->target = $creation->selected->getAttributeTertiary();
-
-        $ct->setAttributes($a);
-
-        return $ct;
-    }
-
     //persists character traits model
+    //refactored
     public static function persistCharacterTrait(
         $cp, 
         $trait, 
         $value, 
         $em, 
-        $characterTraitsRepository
-    )
+        $doctrine
+    ): void
     {
+        $characterTraitsRepository = $doctrine->getRepository(character_traits::class);
         $ct = $characterTraitsRepository->findBy(["characterProfile" => intval($cp), "trait" => $trait]);
         $ct[0]->setValue($value);
 
@@ -235,6 +224,7 @@ class CharacterUtils
     }
     
     //finds trait by category, sub category, or id
+    //refactored
     public static function findTrait($traits, int $category, int $subCategory, int $id = 0)
     {
         $a = [];
@@ -255,231 +245,215 @@ class CharacterUtils
     }
 
     //distributes freebie points
-    public static function freebies($ct, $creation)
+    //refactored
+    public static function freebies($ct, $creation): void
     {
         $freebies = new \stdClass();
         $freebies->total = 0;
         $freebies->target = $creation->selected->getFreebies();
         $freebies->used_on = [];
+        $types = [
+            'attribute.physical' => new trait_allocation(
+                'attribute.physical',
+                5,
+                $ct->attributes->physical,
+                self::getKeyLists($ct->attributes->physical)
+            ),
+            'attribute.social' => new trait_allocation(
+                'attribute.social',
+                5,
+                $ct->attributes->social,
+                self::getKeyLists($ct->attributes->social)
+            ),
+            'attribute.mental' => new trait_allocation(
+                'attribute.mental',
+                5,
+                $ct->attributes->mental,
+                self::getKeyLists($ct->attributes->mental)
+            ),
+            'ability.talents' => new trait_allocation(
+                'ability.talents',
+                2,
+                $ct->abilities->talents,
+                self::getKeyLists($ct->abilities->talents)
+            ),
+            'ability.skills' => new trait_allocation(
+                'ability.skills',
+                2,
+                $ct->abilities->skills,
+                self::getKeyLists($ct->abilities->skills)
+            ),
+            'ability.knowledges' => new trait_allocation(
+                'ability.knowledges',
+                2,
+                $ct->abilities->knowledges,
+                self::getKeyLists($ct->abilities->knowledges)
+            ),
+            'advantage.disciplines' => new trait_allocation(
+                'advantage.disciplines',
+                7,
+                $ct->advantages->disciplines,
+                self::getKeyLists($ct->advantages->discplines)
+            ),
+            'advantage.backgrounds' => new trait_allocation(
+                'advantage.backgrounds',
+                1,
+                $ct->advantages->backgrounds,
+                self::getKeyLists($ct->advantages->backgrounds)
+            ),
+            'advantages.virtues' => new trait_allocation(
+                'advantage.virtues',
+                2,
+                $ct->advantages->virtues,
+                self::getKeyLists($ct->advantages->backgrounds)
+            ),
+            'path' => new trait_allocation(
+                'path',
+                2,
+                null,
+                null,
+                $ct->path,
+            ),
+            'willpower' => new trait_allocation(
+                'willpower',
+                1,
+                null,
+                null,
+                $ct->willpower
+            )
+        ];
         while ($freebies->total < $freebies->target) {
             $left = $freebies->target - $freebies->total;
-            $o = new \stdClass();
             if ($left >= 7 && $ct->clan->name !== "caitiff") {
                 $n = rand(0,10);
                 switch ($n) {
                     case 0:
-                        $o->type = "attribute.physical";
-                        $o->cost = 5;
-                        $o->group = $ct->attributes->physical;
-                        $o->items = self::getKeyLists($o->group);
+                        $o = $types['attribute.physical'];
                         break;
                     case 1:
-                        $o->type = "attribute.social";
-                        $o->cost = 5;
-                        $o->group = $ct->attributes->social;
-                        $o->items = self::getKeyLists($o->group);
+                        $o = $types['attribute.social'];
                         if ($ct->clan->name === "nosferatu") {
-                            $o->items = ["charisma", "manipulation"];
+                            $o->setItems(["charisma", "manipulation"]);
                         }
                         break;
                     case 2:
-                        $o->type = "attribute.mental";
-                        $o->cost = 5;
-                        $o->group = $ct->attributes->mental;
-                        $o->items = self::getKeyLists($o->group);
+                        $o = $types['attribute.mental'];
                         break;
                     case 3:
-                        $o->type = "ability.talents";
-                        $o->cost = 2;
-                        $o->group = $ct->abilities->talents;
-                        $o->items = self::getKeyLists($o->group);
+                        $o = $types['ability.talents'];
                         break;
                     case 4:
-                        $o->type = "ability.skills";
-                        $o->cost = 2;
-                        $o->group = $ct->abilities->skills;
-                        $o->items = self::getKeyLists($o->group);
+                        $o = $types['ability.skills'];
                         break;
                     case 5:
-                        $o->type = "ability.knowledges";
-                        $o->cost = 2;
-                        $o->group = $ct->abilities->knowledges;
-                        $o->items = self::getKeyLists($o->group);
+                        $o = $types['ability.knowledges'];
                         break;
                     case 6:
-                        $o->type = "advantages.disciplines";
-                        $o->cost = 7;
-                        $o->group = $ct->advantages->disciplines;
-                        $o->items = self::getKeyLists($o->group);
+                        $o = $types['advantages.discplines'];
                         break;
                     case 7:
-                        $o->type = "advantages.backgrounds";
-                        $o->cost = 1;
-                        $o->group = $ct->advantages->backgrounds;
-                        $o->items = self::getKeyLists($o->group);
+                        $o = $types['advantages.backgrounds'];
                         break;
                     case 8:
-                        $o->type = "advantages.virtues";
-                        $o->cost = 1;
-                        $o->group = $ct->advantages->virtues;
-                        $o->items = self::getKeyLists($o->group);
+                        $o = $types['advantages.virtues'];
                         break;
                     case 9:
-                        $o->type = "path";
-                        $o->cost = 2;
-                        $o->item = $ct->path;
+                        $o = $types['path'];
                         break;
                     case 10:
-                        $o->type = "willpower";
-                        $o->cost = 1;
-                        $o->item = $ct->willpower;
+                        $o = $types['willpower'];
                         break;
                 }
             } elseif ($left >= 5 && ($left < 7 || $ct->clan->name === "caitiff")) {
                 $n = rand(0,9);
                 switch ($n) {
                     case 0:
-                        $o->type = "attribute.physical";
-                        $o->cost = 5;
-                        $o->group = $ct->attributes->physical;
-                        $o->items = self::getKeyLists($o->group);
+                        $o = $types['attribute.physical'];
                         break;
                     case 1:
-                        $o->type = "attribute.social";
-                        $o->cost = 5;
-                        $o->group = $ct->attributes->social;
-                        $o->items = self::getKeyLists($o->group);
+                        $o = $types['attribute.social'];
                         if ($ct->clan->name === "nosferatu") {
-                            $o->items = ["charisma", "manipulation"];
+                            $o->setItems(["charisma", "manipulation"]);
                         }
                         break;
                     case 2:
-                        $o->type = "attribute.mental";
-                        $o->cost = 5;
-                        $o->group = $ct->attributes->mental;
-                        $o->items = self::getKeyLists($o->group);
+                        $o = $types['attribute.mental'];
                         break;
                     case 3:
-                        $o->type = "ability.talents";
-                        $o->cost = 2;
-                        $o->group = $ct->abilities->talents;
-                        $o->items = self::getKeyLists($o->group);
+                        $o = $types['ability.talents'];
                         break;
                     case 4:
-                        $o->type = "ability.skills";
-                        $o->cost = 2;
-                        $o->group = $ct->abilities->skills;
-                        $o->items = self::getKeyLists($o->group);
+                        $o = $types['ability.skills'];
                         break;
                     case 5:
-                        $o->type = "ability.knowledges";
-                        $o->cost = 2;
-                        $o->group = $ct->abilities->knowledges;
-                        $o->items = self::getKeyLists($o->group);
+                        $o = $types['ability.knowledges'];
                         break;
                     case 6:
-                        $o->type = "advantages.backgrounds";
-                        $o->cost = 1;
-                        $o->group = $ct->advantages->backgrounds;
-                        $o->items = self::getKeyLists($o->group);
+                        $o = $types['advantages.backgrounds'];
                         break;
                     case 7:
-                        $o->type = "advantages.virtues";
-                        $o->cost = 1;
-                        $o->group = $ct->advantages->virtues;
-                        $o->items = self::getKeyLists($o->group);
+                        $o = $types['advantages.virtues'];
                         break;
                     case 8:
-                        $o->type = "path";
-                        $o->cost = 2;
-                        $o->item = $ct->path;
+                        $o = $types['path'];
                         break;
                     case 9:
-                        $o->type = "willpower";
-                        $o->cost = 1;
-                        $o->item = $ct->willpower;
+                        $o = $types['willpower'];
                         break;
                 }
             } elseif ($left >= 2 && $left < 5) {
                 $n = rand(0,6);
                 switch ($n) {
                     case 0:
-                        $o->type = "ability.talents";
-                        $o->cost = 2;
-                        $o->group = $ct->abilities->talents;
-                        $o->items = self::getKeyLists($o->group);
+                        $o = $types['ability.talents'];
                         break;
                     case 1:
-                        $o->type = "ability.skills";
-                        $o->cost = 2;
-                        $o->group = $ct->abilities->skills;
-                        $o->items = self::getKeyLists($o->group);
+                        $o = $types['ability.skills'];
                         break;
                     case 2:
-                        $o->type = "ability.knowledges";
-                        $o->cost = 2;
-                        $o->group = $ct->abilities->knowledges;
-                        $o->items = self::getKeyLists($o->group);
+                        $o = $types['ability.knowledges'];
                         break;
                     case 3:
-                        $o->type = "advantages.backgrounds";
-                        $o->cost = 1;
-                        $o->group = $ct->advantages->backgrounds;
-                        $o->items = self::getKeyLists($o->group);
+                        $o = $types['advantages.backgrounds'];
                         break;
                     case 4:
-                        $o->type = "advantages.virtues";
-                        $o->cost = 1;
-                        $o->group = $ct->advantages->virtues;
-                        $o->items = self::getKeyLists($o->group);
+                        $o = $types['advantages.virtues'];
                         break;
                     case 5:
-                        $o->type = "path";
-                        $o->cost = 2;
-                        $o->item = $ct->path;
+                        $o = $types['path'];
                         break;
                     case 6:
-                        $o->type = "willpower";
-                        $o->cost = 1;
-                        $o->item = $ct->willpower;
+                        $o = $types['willpower'];
                         break;
                 }
-            } elseif ($left >= 1 && $left < 2) {
+            } elseif ($left === 1) {
                 $n = rand(0,2);
                 switch ($n) {
                     case 0:
-                        $o->type = "advantages.backgrounds";
-                        $o->cost = 1;
-                        $o->group = $ct->advantages->backgrounds;
-                        $o->items = self::getKeyLists($o->group);
+                        $o = $types['advantages.backgrounds'];
                         break;
                     case 1:
-                        $o->type = "advantages.virtues";
-                        $o->cost = 1;
-                        $o->group = $ct->advantages->virtues;
-                        $o->items = self::getKeyLists($o->group);
+                        $o = $types['advantages.virtues'];
                         break;
                     case 2:
-                        $o->type = "willpower";
-                        $o->cost = 1;
-                        $o->item = $ct->willpower;
+                        $o = $types['willpower'];
                         break;
                 }
             }
-            if ($left >= $o->cost) {
-                if (!empty($o->item)) {
-                    $o->item++;
-                    $freebies->total = $freebies->total + $o->cost;
-                    $freebies->used_on[] = $o->type;
-                } elseif (!empty($o->group)) {
+            if ($left >= $o->getCost()) {
+                if (!empty($o->getItem())) {
+                    $o->setItem(++$o->getItem());
+                    $freebies->total = $freebies->total + $o->getCost();
+                    $freebies->used_on[] = $o->getType();
+                } elseif (!empty($o->getGroup())) {
                     $set = false;
                     while ($set === false) {
-                        $c = count($o->items)-1;
+                        $c = count($o->getItems())-1;
                         $r = rand(0, $c);
-                        if ($o->group[$r]->value < 5) {
-                            $o->group[$r]->value++;
-                            $freebies->total = $freebies->total + $o->cost;
-                            $freebies->used_on[] = $o->type;
+                        if ($o->getGroup()[$r]->value < 5) {
+                            $o->getGroup()[$r]->value++;
+                            $freebies->total = $freebies->total + $o->getCost();
+                            $freebies->used_on[] = $o->getType();
                             break;
                         }
                     }
@@ -489,14 +463,14 @@ class CharacterUtils
         $ct->freebies = $freebies;
     }
 
-    public static function setCharacter(
-        $type, 
-        $pointSchemasRepository, 
-        $traitEntityRepository, 
-        $clanRepository,
-        $clanDisciplinesRepository
-    )
+    //generates a random character
+    //refactored a bit
+    public static function setCharacter($type, $doctrine): character_template
     {
+        $pointSchemasRepository = $doctrine->getRepository(point_schemas::class);
+        $traitEntityRepository = $doctrine->getRepository(trait_entity::class);
+        $clanRepository = $doctrine->getRepository(clan::class);
+        $clanDisciplinesRepository = $doctrine->getRepository(clan_disciplines::class);
         $ct = new character_template;
         switch ($type) {
             case "kindred":
@@ -522,62 +496,29 @@ class CharacterUtils
                 $creation->setVirtues(self::findTrait($creation->getTraits(), 5, 0));
 
                 $character = new \stdClass();
-                $character->clan = rand(0,(count($creation->getClans())-1));
-                $character->clanId = $creation->getClans()[$character->clan]->getId();
-                $character->clan = $creation->getClans()[$character->clan]->getName();
-                $ct->setClan($character->clan);
-                $ct->setClanId($character->clanId);
+                $ct->setClan(
+                    $creation->getClans()[
+                        rand(0, count($creation->getClans())-1)
+                    ]->getName());
+                $ct->setClanId($creation->getClans()[$ct->getClan()]->getId());
                 $creation->clanDisciplines = $clanDisciplinesRepository
-                    ->findBy(["clan" => $character->clanId]);
+                    ->findBy(["clan" => $ct->getClanId()]);
                 $ct->setGeneration(13);
+
                 $character->generation = 13;
                 $character->attributes = new \stdClass();
                 $character->abilities = new \stdClass();
                 $character->advantages = new \stdClass();
-                $character->attributes->physical = new \stdClass();
-                $character->attributes->physical->total = 0;
-                $character->attributes->physical->target = 0;
-                self::buildTraitGroup(
-                    $creation->getAttributes()->getPhysical(), 
-                    $character->attributes->physical
-                );
-                $character->attributes->social = new \stdClass();
-                $character->attributes->social->total = 0;
-                $character->attributes->social->target = 0;
-                self::buildTraitGroup(
-                    $creation->getAttributes()->getSocial(), 
-                    $character->attributes->social
-                );
-                $character->attributes->mental = new \stdClass();
-                $character->attributes->mental->total = 0;
-                $character->attributes->mental->target = 0;
-                self::buildTraitGroup(
-                    $creation->getAttributes()->getMental(), 
-                    $character->attributes->mental
-                );
+                self::populateTraitGroup('attributes', 'physical', $character, $creation);
+                self::populateTraitGroup('attributes', 'social', $character, $creation);
+                self::populateTraitGroup('attributes', 'mental', $character, $creation);
                 $ct->setAttributes($character->attributes);
-                $character->abilities->talents = new \stdClass();
-                $character->abilities->talents->total = 0;
-                $character->abilities->talents->target = 0;
-                self::buildTraitGroup(
-                    $creation->getAbilities()->getTalents(), 
-                    $character->abilities->talents
-                );
-                $character->abilities->skills = new \stdClass();
-                $character->abilities->skills->total = 0;
-                $character->abilities->skills->target = 0;
-                self::buildTraitGroup(
-                    $creation->getAbilities()->getSkills(), 
-                    $character->abilities->skills
-                );
-                $character->abilities->knowledges = new \stdClass();
-                $character->abilities->knowledges->total = 0;
-                $character->abilities->knowledges->target = 0;
-                self::buildTraitGroup(
-                    $creation->getAbilities()->getKnowledges(), 
-                    $character->abilities->knowledges
-                );
+
+                self::populateTraitGroup('abilities', 'talents', $character, $creation);
+                self::populateTraitGroup('abilities', 'skills', $character, $creation);
+                self::populateTraitGroup('abilities', 'knowledges', $character, $creation);
                 $ct->setAbilities($character->abilities);
+
                 $character->advantages->disciplines = new \stdClass();
                 $character->advantages->disciplines->total = 0;
                 $character->advantages->disciplines->target = 0;
@@ -595,13 +536,7 @@ class CharacterUtils
                     $character->advantages->disciplines->{$trait}->value = 0;
                     $character->advantages->disciplines->{$trait}->name = $trait;
                 }
-                $character->advantages->virtues = new \stdClass();
-                $character->advantages->virtues->total = 0;
-                $character->advantages->virtues->target = 0;
-                self::buildTraitGroup(
-                    $creation->getVirtues(), 
-                    $character->advantages->virtues
-                );
+                self::populateTraitGroup('advantages', 'virtues', $character, $creation);
                 $character->advantages->backgrounds = new \stdClass();
                 $character->advantages->backgrounds->total = 0;
                 $character->advantages->backgrounds->target = 0;
@@ -609,21 +544,21 @@ class CharacterUtils
                 $ct->setWillpower(0);
                 $ct->setPath(0);
                 $s = rand(0,1);
-                $f = null;
-                $l = null;
+                $firstName = null;
+                $lastName = null;
                 switch ($s) {
                     case 0:
                         $r = rand(0,(count($names->m)-1));
-                        $f = $names->m[$r];
+                        $firstName = $names->m[$r];
                         break;
                     case 1:
                         $r = rand(0,(count($names->f)-1));
-                        $f = $names->f[$r];
+                        $firstName = $names->f[$r];
                         break;
                 }
                 $r = rand(0,(count($names->l)-1));
                 $l = $names->l[$r];
-                $ct->setName("$f $l");
+                $ct->setName("$firstName $lastName");
                 $ct->setNature(0);
                 $ct->setDemeanor(0);
                 $ct->setSire(0);
@@ -631,26 +566,46 @@ class CharacterUtils
         }
         return $ct;
     }
-    
-    public static function buildTraitGroup($creationRules, $category): void
+
+    //populates trait group by category and subcategory
+    //refactored
+    public static function populateTraitGroup(
+        string $category, 
+        string $subCategory, 
+        object $character, 
+        creation $creation
+    ): void
     {
+        $getCategory = "get".ucfirst($category);
+        $getSubCategory = 'get'.ucfirst($subCategory);
+        $character->{$category}->{$subCategory} = self::buildTraitGroup(
+            $creation->{$getCategory}()->{$getSubCategory}(), 
+            $character->{$category}->{$subCategory}
+        );
+        $character->{$category}->{$subCategory}->total = 0;
+        $character->{$category}->{$subCategory}->target = 0;
+}
+    
+    //builds default trait category
+    public static function buildTraitGroup($creationRules, array $category, int $default = 1): object
+    {
+        $group = new stdClass;
         for ($i=0; $i<count($creationRules); $i++) {
             $trait = $category[$i]->getTrait();
-            $category->{$trait} = new \stdClass();
-            $category->{$trait}->id = $category[$i]->getId();
-            $category->{$trait}->value = 1;
-            $category->{$trait}->name = $category[$i]->getTrait();
+            $group->{$trait} = new \stdClass();
+            $group->{$trait}->id = $category[$i]->getId();
+            $group->{$trait}->value = $default;
+            $group->{$trait}->name = $category[$i]->getTrait();
         }
+        return $group;
     }
 
-    public static function setCreation(
-        $clan, 
-        $pointSchemasRepository, 
-        $traitEntityRepository, 
-        $clanRepository, 
-        $clanDisciplinesRepository
-    )
+    //sets creation rules
+    public static function setCreation($clan, $doctrine): creation
     {
+        $pointSchemasRepository = $doctrine->getRepository(point_schemas::class);
+        $traitEntityRepository = $doctrine->getRepository(trait_entity::class);
+        $clanRepository = $doctrine->getRepository(clan::class);
         $creation = new creation;
         $attributes = new attributes;
         $abilities = new abilities;
@@ -674,7 +629,8 @@ class CharacterUtils
         return $creation;
     }
 
-    public static function pst_setter()
+    //sets primary, secondary, and tertiary decorators
+    public static function pst_setter(): object
     {
         $pst = [];
         $temp = new \stdClass();
@@ -682,26 +638,31 @@ class CharacterUtils
         $temp->s = 1;
         $temp->t = 2;
         $pst[] = $temp;
+
         $temp = new \stdClass();
         $temp->p = 0;
         $temp->s = 2;
         $temp->t = 1;
         $pst[] = $temp;
+
         $temp = new \stdClass();
         $temp->p = 1;
         $temp->s = 0;
         $temp->t = 2;
         $pst[] = $temp;
+
         $temp = new \stdClass();
         $temp->p = 1;
         $temp->s = 2;
         $temp->t = 0;
         $pst[] = $temp;
+
         $temp = new \stdClass();
         $temp->p = 2;
         $temp->s = 0;
         $temp->t = 1;
         $pst[] = $temp;
+
         $temp = new \stdClass();
         $temp->p = 2;
         $temp->s = 1;
@@ -712,6 +673,31 @@ class CharacterUtils
         return $pst[$r];
     }
 
+    //sets attribute primary, secondary, tertiary identifiers
+    public static function pst_attributes(character_template $ct, $creation): character_template
+    {
+        $attributes = [
+            "physical",
+            "social",
+            "mental"
+        ];
+
+        $pst = self::pst_setter();
+        $pst->p = $attributes[$pst->p];
+        $pst->s = $attributes[$pst->s];
+        $pst->t = $attributes[$pst->t];
+
+        $a = $ct->getAttributes();
+        $a[$pst->p]->target = $creation->selected->getAttributePrimary();
+        $a[$pst->s]->target = $creation->selected->getAttributeSecondary();
+        $a[$pst->t]->target = $creation->selected->getAttributeTertiary();
+
+        $ct->setAttributes($a);
+
+        return $ct;
+    }
+
+    //sets ability primary, secondary, and tertiary identifiers
     public static function pst_abilities(character_template $ct, $creation): character_template
     {
         $abilities = [
@@ -726,24 +712,13 @@ class CharacterUtils
         $pst->t = $abilities[$pst->t];
 
         $a = $ct->getAbilities();
-        $a->{$pst->p}->target = $creation->selected->getAbilityPrimary();
-        $a->{$pst->s}->target = $creation->selected->getAbilitySecondary();
-        $a->{$pst->t}->target = $creation->selected->getAbilityTertiary();
+        $a[$pst->p]->target = $creation->selected->getAbilityPrimary();
+        $a[$pst->s]->target = $creation->selected->getAbilitySecondary();
+        $a[$pst->t]->target = $creation->selected->getAbilityTertiary();
 
         $ct->setAbilities($a);
 
         return $ct;
-    }
-
-    public static function findTraitValue($id, $traits)
-    {
-        $trait_count = count($traits);
-        for ($i=0; $i<$trait_count; $i++) {
-            if ($traits[$i]->getTrait() === $id) {
-                return $traits[$i];
-            }
-        }
-        return null;
     }
 
     public static function findTraitByName($name, $traits)

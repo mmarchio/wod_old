@@ -6,6 +6,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
+use AppBundle\Entity\types;
 
 class InsertTypeController extends Controller 
 {
@@ -18,7 +19,7 @@ class InsertTypeController extends Controller
         if (!empty($content)) {
             $em = $this->getDoctrine()->getManager();
 
-            $type = new types();
+            $type = new types;
             $type->setName($request->get("name"));
             $type->setType($request->get("type"));
             $type->setSubType($request->get("sub_type"));
