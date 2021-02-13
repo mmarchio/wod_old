@@ -456,10 +456,10 @@ class CombatUtils
                     'dmg' => self::roll(6, ($c->getBrawlDmgRoll() - self::getHealthModifier($c))),
                     'o_soak' => 0
                 ];
-                if ($temp['dmg']->result > 0 && $temp["hit"]->result > 1) {
+                if ($temp['dmg']->getResult() > 0 && $temp["hit"]->getResult() > 1) {
                     $temp['o_soak'] = self::roll(6, ($o->getSoakRoll() - self::getHealthModifier($o)));
-                    if ($temp['o_soak']->result < $temp["dmg"]->result) {
-                        $dmg = $temp["dmg"]->result - $temp["o_soak"]->result;
+                    if ($temp['o_soak']->getResult() < $temp["dmg"]->getResult()) {
+                        $dmg = $temp["dmg"]->getResult() - $temp["o_soak"]->getResult();
                         $o->setHealth($o->getHealth() - $dmg);
                     }
                 }
