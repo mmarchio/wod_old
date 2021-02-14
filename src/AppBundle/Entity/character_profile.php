@@ -3,6 +3,7 @@
 namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use JsonSerializable;
 
 /**
  * character_profile
@@ -10,8 +11,17 @@ use Doctrine\ORM\Mapping as ORM;
  * @ORM\Table(name="character_profile")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\character_profileRepository")
  */
-class character_profile
+class character_profile implements JsonSerializable
 {
+    public function jsonSerialize(): array
+    {
+        $a = [];
+        foreach ($this as $k => $v) {
+            $a[$k] = $v;
+        }
+        return $a;
+    }
+
     /**
      * @var int
      *
