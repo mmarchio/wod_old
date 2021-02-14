@@ -2,9 +2,7 @@
 
 namespace AppBundle\Entity;
 
-use JsonSerializable;
-
-class combat_character implements JsonSerializable
+class combat_character
 {
     private $id;
     private $strength;
@@ -30,15 +28,6 @@ class combat_character implements JsonSerializable
     private $healthModifier;
     private $soakRoll;
     private $name;
-
-    public function jsonSerialize(): array
-    {
-        $a = [];
-        foreach ($this as $k => $v) {
-            $a[$k] = $v;
-        }
-        return $a;
-    }
 
     /**
      * @return mixed

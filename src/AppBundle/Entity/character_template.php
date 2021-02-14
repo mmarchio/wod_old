@@ -2,9 +2,8 @@
 
 namespace AppBundle\Entity;
 
-use JsonSerializable;
 
-class character_template implements JsonSerializable
+class character_template
 {
     private $name;
     private $player;
@@ -24,14 +23,6 @@ class character_template implements JsonSerializable
     private $freebies;
     private $traits;
 
-    public function jsonSerialize(): array
-    {
-        $a = [];
-        foreach ($this as $k => $v) {
-            $a[$k] = $v;
-        }
-        return $a;
-    }
     /**
      * @return mixed
      */
@@ -209,49 +200,49 @@ class character_template implements JsonSerializable
     }
 
     /**
-     * @return array
+     * @return mixed
      */
-    public function getAttributes(): array
+    public function getAttributes()
     {
         return $this->attributes;
     }
 
     /**
-     * @param array $attributes
+     * @param mixed $attributes
      */
-    public function setAttributes(array $attributes)
+    public function setAttributes($attributes)
     {
         $this->attributes = $attributes;
     }
 
     /**
-     * @return array
+     * @return mixed
      */
-    public function getAbilities(): array
+    public function getAbilities()
     {
         return $this->abilities;
     }
 
     /**
-     * @param array $abilities
+     * @param mixed $abilities
      */
-    public function setAbilities(array $abilities)
+    public function setAbilities($abilities)
     {
         $this->abilities = $abilities;
     }
 
     /**
-     * @return array
+     * @return mixed
      */
-    public function getAdvantages(): array
+    public function getAdvantages()
     {
         return $this->advantages;
     }
 
     /**
-     * @param array $advantages
+     * @param mixed $advantages
      */
-    public function setAdvantages(array $advantages)
+    public function setAdvantages($advantages)
     {
         $this->advantages = $advantages;
     }
