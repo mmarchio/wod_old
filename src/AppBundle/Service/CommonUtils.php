@@ -2,6 +2,9 @@
 namespace AppBundle\Service;
 
 use AppBundle\Entity\combat_character;
+use AppBundle\Entity\character_profile;
+use AppBundle\Entity\character_traits;
+use AppBundle\Entity\actions;
 
 class CommonUtils 
 {
@@ -94,18 +97,7 @@ class CommonUtils
         $action = [];
         if ($c->getDisciplines(42) > 0) {
             for ($i=0; $i<$c->getDisciplines(42); $i++) {
-                $temp = [
-                    'hit' => self::roll(6, ($c->getBrawlHitRoll() - self::getHealthModifier($c))),
-                    'dmg' => self::roll(6, ($c->getBrawlDmgRoll() - self::getHealthModifier($c))),
-                    'o_soak' => 0
-                ];
-                if ($temp['dmg']->result > 0 && $temp["hit"]->result > 1) {
-                    $temp['o_soak'] = self::roll(6, ($o->getSoakRoll() - self::getHealthModifier($o)));
-                    if ($temp['o_soak']->result < $temp["dmg"]->result) {
-                        $dmg = $temp["dmg"]->result - $temp["o_soak"]->result;
-                        $o->setHealth($o->getHealth() - $dmg);
-                    }
-                }
+                $temp = self::combatAction($c, $o)[0];
                 $action[] = $temp;
             }
         }
@@ -176,6 +168,196 @@ class CommonUtils
                 return 1;
                 break;
         }
+    }
+
+    public static function combat($doctrine, $p1 = null, $p2 = null)
+    {
+        $match_id = self::gen_uuid();
+        dump($match_id);
+
+        $characters = new \stdClass();
+        $characters->p1 = 1;
+        $characters->p2 = 2;
+
+        if ($p1 && $p2) {
+            $characters->p1 = $p1;
+            $characters->p2 = $p2;
+        } else {
+            $characters = $doctrine
+                ->getRepository(character_profile::class)
+                ->findAll();
+
+            $character_count = count($characters) - 1;
+            $characters = self::getRandomCharacters($character_count);
+        }
+        $characters->p1 = self::getCombatCharacter($doctrine, $characters->p1);
+        $characters->p2 = self::getCombatCharacter($doctrine, $characters->p2);
+
+        $turn = [];
+        $end = false;
+        while ($end === false) {
+            $turn = self::combatTurn($characters->p1, $characters->p2);
+            dump($turn);
+            $turn[] = $turn;
+            $a = new actions();
+            $a->setMatchId($match_id);
+            $a->setAction(serialize($turn));
+            $em = $doctrine->getManager();
+            $em->persist($a);
+            $em->flush();
+            if ($characters->p1->getHealth() < 1 || $characters->p2->getHealth() < 1) {
+                $end = true;
+            }
+        }
+        $characters->record = json_encode($turn);
+        if ($characters->p1->getHealth() > 0 || $characters->p2->getHealth() > 0) {
+            if ($characters->p1->getHealth() > 0) {
+                $characters->win = $characters->p1->getId();
+                $characters->win_name = $characters->p1->getName();
+                $characters->lose = $characters->p2->getId();
+                $characters->lose_name = $characters->p2->getName();
+            } else {
+                $characters->win = $characters->p2->getId();
+                $characters->win_name = $characters->p2->getName();
+                $characters->lose = $characters->p1->getId();
+                $characters->lose_name = $characters->p1->getName();
+            }
+        }
+        $characters->matchId = $match_id;
+        return $characters;
+    }
+
+    public static function getRandomCharacters($character_count) {
+        $p1 = rand(0, $character_count);
+        $p2 = rand(0, $character_count);
+        if ($p1 === $p2) {
+            if ($p1 === $character_count) {
+                $p2 = $character_count - 1;
+            } elseif ($p1 === 0) {
+                $p2 = $p1 + 1;
+            } else {
+                $p2 = $p1 + 1;
+            }
+        }
+        $c = new \stdClass();
+        $c->p1 = $p1;
+        $c->p2 = $p2;
+
+        return $c;
+    }
+
+    public static function getCombatCharacter($doctrine, $id)
+    {
+        $ct = $doctrine
+            ->getRepository(character_traits::class)
+            ->findBy(["characterProfile" => $id]);
+        $cp = $doctrine
+            ->getRepository(character_profile::class)
+            ->find($id);
+        $c = new combat_character();
+        $c->setId($cp->getId());
+        $c->setModifier(0);
+        $c->setName($cp->getName());
+        $c->setStrength(self::findTraitValue(1, $ct));
+        $c->setDexterity(self::findTraitValue(2, $ct));
+        $c->setStamina(self::findTraitValue(3, $ct));
+        $c->setPerception(self::findTraitValue(7, $ct));
+        $c->setBrawl(self::findTraitValue(13, $ct));
+        $c->setDodge(self::findTraitValue(14, $ct));
+        $c->setFirearms(self::findTraitValue(23, $ct));
+        $c->setMelee(self::findTraitValue(24, $ct));
+        $d = [
+            40 => self::findTraitValue(40, $ct) ?? 0,
+            41 => self::findTraitValue(41, $ct) ?? 0,
+            42 => self::findTraitValue(42, $ct) ?? 0,
+            43 => self::findTraitValue(43, $ct) ?? 0,
+            44 => self::findTraitValue(44, $ct) ?? 0,
+            45 => self::findTraitValue(45, $ct) ?? 0,
+            46 => self::findTraitValue(46, $ct) ?? 0,
+            47 => self::findTraitValue(47, $ct) ?? 0,
+            48 => self::findTraitValue(48, $ct) ?? 0,
+            49 => self::findTraitValue(49, $ct) ?? 0
+        ];
+        $c->setDisciplines($d);
+        $c->setBrawlHitRoll($c->getDexterity() + $c->getBrawl());
+        $c->setBrawlDmgRoll($c->getStrength() + $c->getDisciplines(45));
+        $c->setMeleeHitRoll($c->getDexterity() + $c->getMelee());
+        $c->setMeleeDmgRoll($c->getStrength() + $c->getDisciplines(45));
+        $c->setFirearmsHitRoll($c->getPerception() + $c->getFirearms() + $c->getDisciplines(40));
+        $c->setDodgeRoll($c->getDexterity() + $c->getDodgeRoll());
+        $c->setInitRoll($c->getPerception() + $c->getBrawl() + $c->getDisciplines(45));
+        $c->setTurns(1 + $c->getDisciplines(42));
+        $c->setHealth(7);
+        $c->setHealthModifier([
+            7 => 0,
+            6 => 1,
+            5 => 1,
+            4 => 2,
+            3 => 2,
+            2 => 5,
+            1 => 7,
+            0 => 20
+        ]);
+        $c->setSoakRoll($c->getStamina() + $c->getDisciplines(44));
+
+        return $c;
+    }
+
+    public static function findTraitValue($id, $traits)
+    {
+        $c = count($traits);
+        for ($i=0; $i<$c; $i++) {
+            if ($traits[$i]->getTrait() == $id) {
+                return $traits[$i]->getValue();
+            }
+        }
+        return null;
+    }
+
+    public static function combatTurn(combat_character $c1, combat_character $c2)
+    {
+        $turn = [];
+        $players = [
+            $c1,
+            $c2
+        ];
+        $init = CommonUtils::getInit($c1, $c2);
+        $init_winner = $players[$init];
+        $init_loser = $players[self::other($init)];
+
+        $p1 = [
+            'name' => $init_winner->getName(),
+            'id' => $init_winner->getId(),
+            'action' => CommonUtils::combatAction($init_winner, $init_loser),
+            'extra' => []
+        ];
+        if ($init_loser->getHealth() > 0) {
+            $p2 = [
+                'name' => $init_loser->getName(),
+                'id' => $init_loser->getId(),
+                'action' => CommonUtils::combatAction($init_loser, $init_winner),
+                'extra' => []
+            ];
+        } else {
+            return $turn;
+        }
+        if ($init_winner->getHealth() > 0) {
+            $p1['extra'] = self::extraTurns($init_winner, $init_loser);
+        }
+        if ($init_loser->getHealth() > 0) {
+            $p2['extra'] = self::extraTurns($init_loser, $init_winner);
+        }
+        if ($init_winner->getHealth() > 0) {
+            CommonUtils::heal($init_winner);
+        }
+        if ($init_loser->getHealth() > 0) {
+            CommonUtils::heal($init_loser);
+        }
+        $turn[] = [
+            $p1,
+            $p2
+        ];
+        return $turn;
     }
 
 }

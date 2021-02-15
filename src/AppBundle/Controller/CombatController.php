@@ -31,17 +31,17 @@ class CombatController extends Controller
     }
 
     /**
-     * @Route("/arena/random/{series}", defaults={"series":1})
+     * Route("/arena/random/{series}", defaults={"series":1})
      */
     public function arenaRandomAction(Request $request, $series)
     {
+        $r = "both died";
         for ($i=0; $i<$series; $i++) {
             try {
                 $match = $this->combat();
             } catch (\Exception $e) {
                 continue;
             }
-            $r = "both died";
             if ($match) {
                 if (!empty($match->win)) {
                     $r = $match->win_name. " won";
@@ -523,14 +523,14 @@ class CombatController extends Controller
         $p1 = [
             'name' => $init_winner->getName(),
             'id' => $init_winner->getId(),
-            'action' => $this->combatAction($init_winner, $init_loser),
+            'action' => CommonUtils::combatAction($init_winner, $init_loser),
             'extra' => []
         ];
         if ($init_loser->getHealth() > 0) {
             $p2 = [
                 'name' => $init_loser->getName(),
                 'id' => $init_loser->getId(),
-                'action' => $this->combatAction($init_loser, $init_winner),
+                'action' => CommonUtils::combatAction($init_loser, $init_winner),
                 'extra' => []
             ];
         } else {
@@ -561,25 +561,6 @@ class CombatController extends Controller
             return $c->getHealthModifier($c->getHealth());
         }
         return -20;
-    }
-
-    protected function combatAction(combat_character $c, combat_character $o)
-    {
-        $action = [];
-        $temp = [
-            'hit' => $this->roll(6, ($c->getBrawlHitRoll() - $this->getHealthModifier($c))),
-            'dmg' => $this->roll(6, ($c->getBrawlDmgRoll() - $this->getHealthModifier($c))),
-            'o_soak' => 0
-        ];
-        if ($temp['dmg']->result > 0 && $temp["hit"]->result > 1) {
-            $temp['o_soak'] = $this->roll(6, ($o->getSoakRoll() - $this->getHealthModifier($o)));
-            if ($temp['o_soak']->result < $temp["dmg"]->result) {
-                $dmg = $temp["dmg"]->result - $temp["o_soak"]->result;
-                $o->setHealth($o->getHealth() - $dmg);
-            }
-        }
-        $action[] = $temp;
-        return $action;
     }
 
     protected function extraTurns(combat_character $c, combat_character $o)
@@ -616,23 +597,6 @@ class CombatController extends Controller
                 break;
         }
     }
-
-    // protected function getInit(combat_character $c1, combat_character $c2)
-    // {
-    //     $init1 = $this->roll(6, $c1->getInitRoll());
-    //     $init2 = $this->roll(6, $c2->getInitRoll());
-    //     switch ($init1 <=> $init2) {
-    //         case 1:
-    //             return 0;
-    //             break;
-    //         case 0:
-    //             $this->getInit($c1, $c2);
-    //             break;
-    //         case -1:
-    //             return 1;
-    //             break;
-    //     }
-    // }
 
     protected function roll($diff, $pool)
     {

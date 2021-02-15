@@ -10,7 +10,7 @@ class CommonUtilsTest extends WebTestCase
 {
     public static function testGenUuid(): void
     {
-        self::assertString(CommonUtils::gen_uuid());
+        self::assertIsString(CommonUtils::gen_uuid());
     }
 
     public static function testOther(): void
@@ -23,7 +23,7 @@ class CommonUtilsTest extends WebTestCase
     {
         $t = new combat_character();
         $t->setHealth(6);
-        CombatUtils::heal($t);
+        CommonUtils::heal($t);
         self::assertEquals(7, $t->getHealth());
     }
 
@@ -52,6 +52,7 @@ class CommonUtilsTest extends WebTestCase
         $c->setFirearmsHitRoll($c->getPerception() + $c->getFirearms());
         $c->setSoakRoll($c->getStamina());
         $c->setHealth(7);
+        $c->setHealthModifier([-20, -7, -5, -2, -2, -1, -1, 0]);
 
         $o->setStrength(1);
         $o->setDexterity(1);
@@ -67,12 +68,14 @@ class CommonUtilsTest extends WebTestCase
         $o->setFirearmsHitRoll($o->getPerception() + $o->getFirearms());
         $o->setSoakRoll($o->getStamina());
         $o->setHealth(7);
+        $o->setHealthModifier([-20, -7, -5, -2, -2, -1, -1, 0]);
+
 
         $test = CommonUtils::combatAction($c, $o);
 
         self::assertIsArray($test);
-        self::assertIsInt($test[0]['hit']);
-        self::assertIsInt($test[0]['dmg']);
+        self::assertIsObject($test[0]['hit']);
+        self::assertIsObject($test[0]['dmg']);
         self::assertIsInt($test[0]['o_soak']);
     }
 
@@ -109,6 +112,7 @@ class CommonUtilsTest extends WebTestCase
         $c->setSoakRoll($c->getStamina());
         $c->setHealth(7);
         $c->setDisciplines([42 => 1]);
+        $c->setHealthModifier([-20, -7, -5, -2, -2, -1, -1, 0]);
 
         $o->setStrength(1);
         $o->setDexterity(1);
@@ -125,12 +129,13 @@ class CommonUtilsTest extends WebTestCase
         $o->setSoakRoll($o->getStamina());
         $o->setHealth(7);
         $o->setDisciplines([42 => 1]);
+        $c->setHealthModifier([-20, -7, -5, -2, -2, -1, -1, 0]);
 
         $test = CommonUtils::extraTurns($c, $o);
 
         self::assertIsArray($test);
-        self::assertIsInt($test[0]['hit']);
-        self::assertIsInt($test[0]['dmg']);
+        self::assertIsObject($test[0]['hit']);
+        self::assertIsObject($test[0]['dmg']);
         self::assertIsInt($test[0]['o_soak']);
     }
 
@@ -156,7 +161,7 @@ class CommonUtilsTest extends WebTestCase
         $o = new combat_character;
         $c->setInitRoll(1);
         $o->setInitRoll(1);
-        $test = CombatUtils::getInit($c, $o);
+        $test = CommonUtils::getInit($c, $o);
         self::assertIsInt($test);
     }
 }
