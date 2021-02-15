@@ -3,7 +3,6 @@
 namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use JsonSerializable;
 
 /**
  * trait_category
@@ -11,17 +10,8 @@ use JsonSerializable;
  * @ORM\Table(name="trait_category")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\trait_categoryRepository")
  */
-class trait_category implements JsonSerializable
+class trait_category
 {
-    public function jsonSerialize(): array
-    {
-        $a = [];
-        foreach ($this as $k => $v) {
-            $a[$k] = $v;
-        }
-        return $a;
-    }
-
     /**
      * @var int
      *
